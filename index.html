@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" data-bs-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -10,83 +10,202 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
-        body { background-color: #f4f6f9; overflow-x: hidden; }
+        body { overflow-x: hidden; transition: background-color 0.4s ease; margin: 0; }
         
-        /* Sidebar Styling */
-        .sidebar { background-color: #212529; min-height: 100vh; transition: 0.3s; }
-        .sidebar-brand { color: #fff; font-weight: 700; letter-spacing: 1px; padding: 1.5rem 1rem; text-align: center; border-bottom: 1px solid #343a40; }
-        .nav-pills .nav-link { color: #c2c7d0; padding: 0.8rem 1rem; border-radius: 0.375rem; margin-bottom: 0.5rem; transition: all 0.2s; cursor: pointer;}
-        .nav-pills .nav-link:hover { color: #fff; background-color: rgba(255,255,255,0.1); }
-        .nav-pills .nav-link.active { background-color: #0d6efd; color: #fff; box-shadow: 0 4px 6px rgba(13, 110, 253, 0.2); }
+        /* STRUKTUR WRAPPER (FLEXBOX) */
+        .wrapper { display: flex; width: 100%; align-items: stretch; overflow: hidden; }
         
-        /* Content Transition */
-        .tab-pane-custom { display: none; animation: fadeIn 0.4s ease-in-out; }
-        .tab-pane-custom.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        /* SIDEBAR DESKTOP */
+        .sidebar { min-width: 250px; max-width: 250px; background-color: #212529; min-height: 100vh; transition: margin 0.35s cubic-bezier(0.4, 0, 0.2, 1); z-index: 1000; box-shadow: 2px 0 5px rgba(0,0,0,0.1); }
+        .sidebar.collapsed { margin-left: -250px; } 
+        
+        .sidebar-brand { color: #fff; font-weight: 700; letter-spacing: 1px; padding: 1.5rem 1rem; text-align: center; border-bottom: 1px solid #343a40; font-size: 1.2rem; }
+        
+        .nav-pills .nav-link { color: #c2c7d0; padding: 0.8rem 1rem; border-radius: 0.375rem; margin-bottom: 0.5rem; transition: all 0.25s ease-in-out; cursor: pointer;}
+        .nav-pills .nav-link:hover { color: #fff; background-color: rgba(255,255,255,0.1); transform: translateX(5px); }
+        .nav-pills .nav-link.active { background-color: #0d6efd; color: #fff; box-shadow: 0 4px 10px rgba(13, 110, 253, 0.3); transform: translateX(0); }
+        
+        /* KONTEN UTAMA */
+        .main-content { width: 100%; min-width: 0; transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; height: 100vh; }
+        .content-scrollable { overflow-y: auto; flex: 1; padding: 1.5rem 2rem; }
+        
+        /* TOPBAR MOBILE */
+        .mobile-topbar { display: none; background-color: #212529; color: white; padding: 12px 20px; align-items: center; justify-content: space-between; border-bottom: 1px solid #343a40; z-index: 1050;}
 
-        /* Custom Card Enhancements */
-        .card { border: none; box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075); margin-bottom: 1.5rem; border-radius: 0.5rem; }
-        .card-header { background-color: transparent; border-bottom: 1px solid #f0f0f0; font-weight: 600; padding: 1rem 1.25rem; }
-        .icon-box { width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; }
+        /* TRANSISI TAB PANEL MANUAL */
+        .tab-pane-custom { display: none; opacity: 0; transform: translateY(15px); }
+        .tab-pane-custom.active { display: block; animation: panelRise 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
         
-        .chart-container { position: relative; height: 250px; width: 100%; }
-        
-        /* Mobile Adjustments */
-        @media (max-width: 767.98px) {
-            .sidebar { min-height: auto; padding-bottom: 0; }
-            .sidebar-brand { display: none; }
-            .nav-pills { flex-direction: row !important; margin: 0; padding: 0; }
-            .nav-pills .nav-item { flex: 1; text-align: center; }
-            .nav-pills .nav-link { margin: 0; border-radius: 0; padding: 1rem 0.5rem; border-bottom: 3px solid transparent; }
-            .nav-pills .nav-link.active { background-color: transparent; color: #0d6efd; border-bottom: 3px solid #0d6efd; box-shadow: none; }
-            .chart-container { height: 200px; }
+        @keyframes panelRise {
+            to { opacity: 1; transform: translateY(0); }
         }
+
+        /* NEW: STYLE BASE UNTUK ANIMASI SEKUENSIAL WIDGET */
+        .animate-widget {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s cubic-bezier(0.25, 1, 0.5, 1), transform 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+        .animate-widget.appear {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* INTERAKTIF KARTU */
+        .card { border: none; box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.05); margin-bottom: 1.5rem; border-radius: 0.5rem; transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), background-color 0.3s ease, border-color 0.3s ease; }
+        .card:hover { transform: translateY(-5px); box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.12) !important; }
+        .card-header { background-color: transparent; border-bottom: 1px solid rgba(0,0,0,0.08); font-weight: 600; padding: 1rem 1.25rem; }
+        .icon-box { width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; transition: transform 0.3s ease; }
+        .card:hover .icon-box { transform: scale(1.1) rotate(5deg); }
+        
+        #theme-toggle i { display: inline-block; transition: transform 0.4s ease; }
+        #theme-toggle:hover i { transform: scale(1.1) rotate(30deg); }
+        
+        /* TRANSISI PROGRESS BAR (MENGALIR HALUS) */
+        .progress-bar { transition: width 1.2rem cubic-bezier(0.4, 0, 0.2, 1); }
+        
+        .table tbody tr { transition: background-color 0.2s ease; }
+        .del-btn { transition: transform 0.2s ease, color 0.2s ease; }
+        .del-btn:hover { transform: scale(1.2); }
+
+        .chart-container { position: relative; height: 250px; width: 100%; }
+
+        /* Dark Mode Preferences */
+        [data-bs-theme="dark"] body { background-color: #121212; }
+        [data-bs-theme="dark"] .card { background-color: #1e1e1e; box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.4); border: 1px solid #2d2d2d; }
+        [data-bs-theme="dark"] .card:hover { box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.6) !important; }
+        [data-bs-theme="dark"] .card-header { border-bottom: 1px solid #2d2d2d; }
+        [data-bs-theme="dark"] .table { color: #e0e0e0; border-color: #2d2d2d; }
+        [data-bs-theme="dark"] .table-light { background-color: #2d2d2d; color: #fff; }
+        [data-bs-theme="dark"] .text-gray-800 { color: #f8f9fa !important; }
+        
+        @media (max-width: 767.98px) {
+            .wrapper { flex-direction: column; }
+            .sidebar { min-width: 100%; max-width: 100%; min-height: auto; display: none; box-shadow: none; }
+            .sidebar.mobile-show { display: block; animation: slideDown 0.35s cubic-bezier(0.23, 1, 0.32, 1) forwards; }
+            .sidebar-brand { display: none; } 
+            .mobile-topbar { display: flex; } 
+            
+            .nav-pills { flex-direction: column !important; padding: 10px 15px;}
+            .nav-pills .nav-link { margin-bottom: 5px; border-radius: 5px; padding: 12px 15px;}
+            .nav-pills .nav-link:hover { transform: translateX(0); }
+            
+            .content-scrollable { padding: 1rem 1rem; }
+            .chart-container { height: 200px; }
+            .filter-container { flex-direction: column; gap: 10px; }
+            .header-actions { flex-direction: column; gap: 10px; width: 100%; }
+            .btn-group { width: 100%; }
+            
+            /* Nonaktifkan efek sekuensial di mobile agar performa HP tetap enteng */
+            .animate-widget { opacity: 1; transform: translateY(0); transition: none; }
+        }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-15px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
 
-<div class="container-fluid p-0">
-    <div class="row g-0 flex-column flex-md-row">
-        
-        <div class="col-md-2 sidebar d-flex flex-column">
-            <div class="sidebar-brand d-none d-md-block">
-                <i class="bi bi-wallet2 me-2"></i> My Cashflow
-            </div>
-            <div class="p-0 p-md-3">
-                <ul class="nav nav-pills flex-column mb-auto">
-                    <li class="nav-item">
-                        <a class="nav-link active nav-btn" data-target="view-dashboard">
-                            <i class="bi bi-grid-1x2-fill me-md-2"></i> <span class="d-none d-md-inline">Dashboard</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link nav-btn" data-target="view-pengaturan">
-                            <i class="bi bi-gear-fill me-md-2"></i> <span class="d-none d-md-inline">Pengaturan</span>
-                        </a>
-                    </li>
-                </ul>
-            </div>
-        </div>
+<div class="wrapper" id="wrapper">
+    
+    <div class="mobile-topbar shadow-sm" id="mobile-topbar">
+        <div class="fw-bold fs-5"><i class="bi bi-wallet2 text-primary me-2"></i> My Casflow</div>
+        <button class="btn btn-outline-light border-secondary btn-sm" id="mobile-menu-btn">
+            <i class="bi bi-list fs-5"></i>
+        </button>
+    </div>
 
-        <div class="col-md-10 vh-100 overflow-auto p-3 p-md-4">
-            
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-brand">
+            <i class="bi bi-wallet2 me-2 text-primary"></i> M
+        </div>
+        <div class="p-0 p-md-3">
+            <ul class="nav nav-pills flex-column mb-auto">
+                <li class="nav-item">
+                    <a class="nav-link active nav-btn" data-target="view-dashboard">
+                        <i class="bi bi-grid-1x2-fill me-2"></i> <span>Dashboard</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link nav-btn" data-target="view-pengaturan">
+                        <i class="bi bi-gear-fill me-2"></i> <span>Pengaturan</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="main-content" id="main-content">
+        
+        <div class="content-scrollable">
             <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
-                <h2 class="h4 mb-0 text-gray-800" id="page-title">Dashboard Utama</h2>
-                <div class="text-muted small fw-bold">
-                    <i class="bi bi-calendar3 me-1"></i> <span id="today-date"></span>
+                <div class="d-flex align-items-center gap-3">
+                    <button class="btn btn-outline-secondary d-none d-md-block" id="desktop-toggle-btn" title="Sembunyikan Menu">
+                        <i class="bi bi-list fs-5"></i>
+                    </button>
+                    <div>
+                        <h2 class="h4 mb-0 text-gray-800 fw-bold" id="page-title">Dashboard Utama</h2>
+                        <div class="text-muted small fw-bold">
+                            <i class="bi bi-calendar3 me-1"></i> <span id="today-date"></span>
+                        </div>
+                    </div>
                 </div>
+                <button id="theme-toggle" class="btn btn-outline-secondary rounded-circle" style="width: 45px; height: 45px;" title="Ganti Tema">
+                    <i class="bi bi-moon-stars-fill"></i>
+                </button>
             </div>
 
             <div id="view-dashboard" class="tab-pane-custom active">
                 
+                <div class="row mb-4">
+                    <div class="col-md-6 mb-3 mb-md-0 animate-widget">
+                        <div class="card h-100 border-0 bg-primary text-white shadow mb-0" style="background: linear-gradient(45deg, #0d6efd, #0dcaf0);">
+                            <div class="card-body p-4">
+                                <div class="d-flex justify-content-between align-items-end mb-2">
+                                    <div>
+                                        <h6 class="text-uppercase text-white-50 mb-1 fw-bold"><i class="bi bi-flag-fill me-1"></i> Target Pernikahan</h6>
+                                        <h3 class="mb-0 fw-bold"><span id="goal-percent">0%</span></h3>
+                                    </div>
+                                    <div class="text-end">
+                                        <div class="small text-white-50 mb-1">Terkumpul: <span id="goal-current" class="fw-bold text-white">Rp 0</span></div>
+                                        <div class="small text-white-50">Target: <span class="fw-bold text-white">Rp 24.000.000</span></div>
+                                    </div>
+                                </div>
+                                <div class="progress" style="height: 10px; background-color: rgba(255,255,255,0.2);">
+                                    <div id="goal-progress-bar" class="progress-bar bg-warning progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6 animate-widget">
+                        <div class="card h-100 border-0 text-white shadow mb-0" style="background: linear-gradient(135deg, #198754, #20c997);">
+                            <div class="card-body p-4">
+                                <div class="d-flex justify-content-between align-items-end mb-2">
+                                    <div>
+                                        <h6 class="text-uppercase text-white-50 mb-1 fw-bold"><i class="bi bi-basket2-fill me-1"></i> Kuota Makan Harian</h6>
+                                        <h3 class="mb-0 fw-bold" id="food-daily-limit">Rp 0 <span class="fs-6 fw-normal text-white-50">/ hari</span></h3>
+                                    </div>
+                                    <div class="text-end">
+                                        <div class="small text-white-50 mb-1">Terpakai: <span id="food-spent" class="fw-bold text-white">Rp 0</span></div>
+                                        <div class="small text-white-50">Sisa Anggaran: <span id="food-remain" class="fw-bold text-white">Rp 600.000</span></div>
+                                    </div>
+                                </div>
+                                <div class="progress" style="height: 10px; background-color: rgba(255,255,255,0.2);">
+                                    <div id="food-progress-bar" class="progress-bar bg-warning" role="progressbar" style="width: 0%"></div>
+                                </div>
+                                <div class="mt-2 small text-white-50 fw-bold" id="food-status-text">Sisa waktu: 0 hari</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="row">
-                    <div class="col-xl-4 col-md-6 mb-4">
+                    <div class="col-xl-4 col-md-6 mb-4 animate-widget">
                         <div class="card h-100 border-start border-primary border-4">
                             <div class="card-body">
                                 <div class="row align-items-center">
                                     <div class="col">
-                                        <div class="text-xs fw-bold text-primary text-uppercase mb-1" style="font-size: 0.75rem;">Total Saldo</div>
-                                        <div class="h3 mb-0 fw-bold text-gray-800" id="total-balance">Rp 0</div>
+                                        <div class="text-xs fw-bold text-primary text-uppercase mb-1" style="font-size: 0.75rem;">Total Saldo Rekening</div>
+                                        <div class="h4 mb-0 fw-bold text-gray-800" id="total-balance">Rp 0</div>
                                     </div>
                                     <div class="col-auto">
                                         <div class="icon-box bg-primary text-white bg-opacity-75"><i class="bi bi-wallet-fill"></i></div>
@@ -96,13 +215,13 @@
                         </div>
                     </div>
                     
-                    <div class="col-xl-4 col-md-6 mb-4">
+                    <div class="col-xl-4 col-md-6 mb-4 animate-widget">
                         <div class="card h-100 border-start border-success border-4">
                             <div class="card-body">
                                 <div class="row align-items-center">
                                     <div class="col">
-                                        <div class="text-xs fw-bold text-success text-uppercase mb-1" style="font-size: 0.75rem;">Pemasukan</div>
-                                        <div class="h3 mb-0 fw-bold text-gray-800" id="total-income">Rp 0</div>
+                                        <div class="text-xs fw-bold text-success text-uppercase mb-1" style="font-size: 0.75rem;">Total Pemasukan</div>
+                                        <div class="h4 mb-0 fw-bold text-gray-800" id="total-income">Rp 0</div>
                                     </div>
                                     <div class="col-auto">
                                         <div class="icon-box bg-success text-white bg-opacity-75"><i class="bi bi-arrow-down-circle-fill"></i></div>
@@ -112,13 +231,13 @@
                         </div>
                     </div>
 
-                    <div class="col-xl-4 col-md-12 mb-4">
+                    <div class="col-xl-4 col-md-12 mb-4 animate-widget">
                         <div class="card h-100 border-start border-danger border-4">
                             <div class="card-body">
                                 <div class="row align-items-center">
                                     <div class="col">
-                                        <div class="text-xs fw-bold text-danger text-uppercase mb-1" style="font-size: 0.75rem;">Pengeluaran</div>
-                                        <div class="h3 mb-0 fw-bold text-gray-800" id="total-expense">Rp 0</div>
+                                        <div class="text-xs fw-bold text-danger text-uppercase mb-1" style="font-size: 0.75rem;">Total Pengeluaran</div>
+                                        <div class="h4 mb-0 fw-bold text-gray-800" id="total-expense">Rp 0</div>
                                     </div>
                                     <div class="col-auto">
                                         <div class="icon-box bg-danger text-white bg-opacity-75"><i class="bi bi-arrow-up-circle-fill"></i></div>
@@ -130,9 +249,9 @@
                 </div>
 
                 <div class="row">
-                    <div class="col-lg-5">
-                        <div class="card">
-                            <div class="card-header"><i class="bi bi-pie-chart-fill me-1 text-primary"></i> Distribusi Pengeluaran</div>
+                    <div class="col-lg-5 animate-widget">
+                        <div class="card mb-4">
+                            <div class="card-header"><i class="bi bi-pie-chart-fill me-1 text-primary"></i> Distribusi Pengeluaran (Non-Makan)</div>
                             <div class="card-body">
                                 <div class="chart-container">
                                     <canvas id="expenseChart"></canvas>
@@ -141,19 +260,19 @@
                         </div>
                     </div>
                     
-                    <div class="col-lg-7">
-                        <div class="card h-100">
+                    <div class="col-lg-7 animate-widget">
+                        <div class="card mb-4 h-100">
                             <div class="card-header d-flex justify-content-between align-items-center">
                                 <span><i class="bi bi-calendar-check-fill me-1 text-info"></i> Riwayat Saldo (Tgl 14)</span>
                                 <span class="badge bg-secondary rounded-pill">Evaluasi Bulanan</span>
                             </div>
                             <div class="card-body p-0">
-                                <div class="table-responsive" style="max-height: 250px;">
-                                    <table class="table table-hover table-striped mb-0 align-middle">
+                                <div class="table-responsive" style="max-height: 280px;">
+                                    <table class="table table-hover mb-0 align-middle">
                                         <thead class="table-light sticky-top">
                                             <tr>
-                                                <th class="ps-3">Periode Bulan</th>
-                                                <th>Sisa Saldo</th>
+                                                <th class="ps-3">Periode</th>
+                                                <th>Sisa Saldo Rekening</th>
                                                 <th class="text-center">Tren</th>
                                             </tr>
                                         </thead>
@@ -165,9 +284,9 @@
                     </div>
                 </div>
 
-                <div class="row mt-2">
-                    <div class="col-lg-4">
-                        <div class="card">
+                <div class="row">
+                    <div class="col-lg-4 animate-widget">
+                        <div class="card mb-4">
                             <div class="card-header bg-dark text-white"><i class="bi bi-plus-circle me-1"></i> Input Transaksi</div>
                             <div class="card-body">
                                 <form id="tx-form">
@@ -203,11 +322,35 @@
                         </div>
                     </div>
 
-                    <div class="col-lg-8">
-                        <div class="card h-100">
-                            <div class="card-header"><i class="bi bi-list-task me-1 text-primary"></i> Riwayat Harian</div>
+                    <div class="col-lg-8 animate-widget">
+                        <div class="card mb-4 h-100">
+                            <div class="card-header d-flex flex-column flex-xl-row justify-content-between align-items-xl-center gap-2">
+                                <div class="mb-0 fw-bold"><i class="bi bi-list-task me-1 text-primary"></i> Riwayat Transaksi</div>
+                                
+                                <div class="d-flex header-actions gap-2">
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <input type="radio" class="btn-check filter-tab" name="btnradio" id="tab-all" value="all" checked>
+                                        <label class="btn btn-outline-primary" for="tab-all">Semua</label>
+
+                                        <input type="radio" class="btn-check filter-tab" name="btnradio" id="tab-inc" value="income">
+                                        <label class="btn btn-outline-success" for="tab-inc">Masuk</label>
+
+                                        <input type="radio" class="btn-check filter-tab" name="btnradio" id="tab-exp" value="expense">
+                                        <label class="btn btn-outline-danger" for="tab-exp">Keluar</label>
+                                    </div>
+
+                                    <div class="d-flex filter-container">
+                                        <input type="date" id="filter-start" class="form-control form-control-sm" title="Mulai Tanggal">
+                                        <span class="align-self-center px-1">-</span>
+                                        <input type="date" id="filter-end" class="form-control form-control-sm" title="Sampai Tanggal">
+                                        <button id="btn-filter" class="btn btn-sm btn-outline-primary ms-1"><i class="bi bi-search"></i></button>
+                                        <button id="btn-reset-filter" class="btn btn-sm btn-outline-secondary ms-1" title="Tampilkan Semua"><i class="bi bi-arrow-counterclockwise"></i></button>
+                                    </div>
+                                </div>
+                            </div>
+
                             <div class="card-body p-0">
-                                <div class="table-responsive" style="max-height: 440px;">
+                                <div class="table-responsive" style="max-height: 400px;">
                                     <table class="table table-hover align-middle mb-0 text-nowrap">
                                         <thead class="table-light sticky-top">
                                             <tr>
@@ -253,7 +396,6 @@
                     </div>
                 </div>
             </div>
-
         </div>
     </div>
 </div>
@@ -263,23 +405,48 @@
 <script>
     try {
         const DATA_KEY = 'keuangan_final_db';
+        const TARGET_TABUNGAN = 24000000; 
+        const BUDGET_MAKAN = 600000; 
+        
         let transactions = [];
         let chartInstance = null;
+        let activeDateFilter = null; 
+        let activeTabFilter = 'all'; 
+        
+        // NEW: PENANDA UNTUK MENCEGAH ANIMASI PROGRESS BAR BERULANG SAAT INPUT FORM
+        let isInitialLoad = true;
 
-        // Ambil Data LocalStorage
+        const sidebar = document.getElementById('sidebar');
+        document.getElementById('desktop-toggle-btn').addEventListener('click', () => { sidebar.classList.toggle('collapsed'); });
+        document.getElementById('mobile-menu-btn').addEventListener('click', () => { sidebar.classList.toggle('mobile-show'); });
+
+        const themeToggle = document.getElementById('theme-toggle');
+        const htmlElement = document.documentElement;
+        let currentTheme = localStorage.getItem('theme_preference') || 'light';
+        
+        function applyTheme(theme) {
+            htmlElement.setAttribute('data-bs-theme', theme);
+            themeToggle.innerHTML = theme === 'dark' ? '<i class="bi bi-sun-fill text-warning"></i>' : '<i class="bi bi-moon-stars-fill"></i>';
+            if(chartInstance) updateChart(); 
+        }
+        applyTheme(currentTheme);
+        themeToggle.addEventListener('click', () => {
+            currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            localStorage.setItem('theme_preference', currentTheme);
+            applyTheme(currentTheme);
+        });
+
         const savedData = localStorage.getItem(DATA_KEY);
         if (savedData) {
             transactions = JSON.parse(savedData);
             if (!Array.isArray(transactions)) transactions = [];
         }
 
-        // Kategori
         const catList = {
             income: ['Gaji Pokok', 'Uang Lembur', 'Bonus', 'Lainnya'],
-            expense: ['Operasional Pabrik', 'Bensin / Transport', 'Makan', 'Hiburan (Game/dll)', 'Tagihan', 'Lainnya']
+            expense: ['Biaya Makan (Harian)', 'Tarik Tunai (Pisah Dana)', 'Operasional Pabrik', 'Bensin / Transport', 'Hiburan (Game/dll)', 'Tagihan', 'Lainnya']
         };
 
-        // DOM Elements
         const dateEl = document.getElementById('tx-date');
         const typeEl = document.getElementById('tx-type');
         const catEl = document.getElementById('tx-category');
@@ -289,280 +456,231 @@
         const tableRecent = document.getElementById('table-recent');
         const table14 = document.getElementById('table-history-14');
 
-        // Set Tanggal Hari Ini Defaults
         const today = new Date();
         dateEl.value = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
         
-        // Format Rupiah & Set Header Date
         const formatRp = (num) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(num);
         document.getElementById('today-date').innerText = new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
-        // Logika Navigasi Tab
         document.querySelectorAll('.nav-btn').forEach(btn => {
             btn.addEventListener('click', function(e) {
                 e.preventDefault();
                 document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
                 document.querySelectorAll('.tab-pane-custom').forEach(c => c.classList.remove('active'));
-                
                 this.classList.add('active');
-                const targetId = this.getAttribute('data-target');
-                document.getElementById(targetId).classList.add('active');
-                
-                // Ubah Judul Header (ambil text span jika ada, atau text langsung)
+                document.getElementById(this.getAttribute('data-target')).classList.add('active');
                 const titleText = this.querySelector('span') ? this.querySelector('span').innerText : this.innerText;
                 document.getElementById('page-title').innerText = titleText === 'Dashboard' ? 'Dashboard Utama' : titleText;
+                
+                if (window.innerWidth <= 768) { sidebar.classList.remove('mobile-show'); }
             });
         });
 
-        // Dinamis Kategori
         function updateCategories() {
             catEl.innerHTML = '';
-            const selected = typeEl.value;
-            catList[selected].forEach(cat => {
-                const option = document.createElement('option');
-                option.value = cat;
-                option.innerText = cat;
-                catEl.appendChild(option);
-            });
+            catList[typeEl.value].forEach(cat => { catEl.appendChild(new Option(cat, cat)); });
         }
         typeEl.addEventListener('change', updateCategories);
         updateCategories();
 
-        // Render Grafik (Chart.js)
         function updateChart() {
             const ctx = document.getElementById('expenseChart').getContext('2d');
-            const expenses = transactions.filter(t => t.type === 'expense');
+            const expenses = transactions.filter(t => t.type === 'expense' && t.category !== 'Biaya Makan (Harian)');
             const catData = {};
-            
             expenses.forEach(t => { catData[t.category] = (catData[t.category] || 0) + t.amount; });
             const labels = Object.keys(catData);
             const data = Object.values(catData);
+            const isDark = htmlElement.getAttribute('data-bs-theme') === 'dark';
+            const textColor = isDark ? '#e0e0e0' : '#666';
 
             if (chartInstance) chartInstance.destroy();
-
             chartInstance = new Chart(ctx, {
                 type: 'doughnut',
                 data: {
                     labels: labels.length ? labels : ['Belum ada data'],
                     datasets: [{
                         data: data.length ? data : [1],
-                        backgroundColor: data.length ? ['#dc3545', '#fd7e14', '#0d6efd', '#6f42c1', '#20c997', '#6c757d'] : ['#e9ecef']
+                        backgroundColor: data.length ? ['#dc3545', '#fd7e14', '#0d6efd', '#6f42c1', '#20c997', '#6c757d'] : [isDark ? '#2d2d2d' : '#e9ecef'],
+                        borderWidth: isDark ? 0 : 2
                     }]
                 },
-                options: { 
-                    responsive: true, 
-                    maintainAspectRatio: false,
-                    plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } } },
-                    cutout: '70%'
-                }
+                options: { responsive: true, maintainAspectRatio: false, cutout: '70%', plugins: { legend: { position: 'bottom', labels: { color: textColor, boxWidth: 12, font: { size: 11 } } } } }
             });
         }
 
-        // Kalkulasi Evaluasi Tanggal 14
         function calculateHistory14() {
             table14.innerHTML = '';
             if (transactions.length === 0) {
-                table14.innerHTML = '<tr><td colspan="3" class="text-center text-muted py-3">Belum ada riwayat transaksi</td></tr>';
+                table14.innerHTML = '<tr><td colspan="3" class="text-center text-muted py-3 small">Belum ada riwayat transaksi</td></tr>';
                 return;
             }
-
             const sorted = [...transactions].sort((a, b) => new Date(a.date) - new Date(b.date));
             const firstDate = new Date(sorted[0].date);
             const todayCurrent = new Date();
-
-            let y = firstDate.getFullYear();
-            let m = firstDate.getMonth();
-            const endYear = todayCurrent.getFullYear();
-            const endMonth = todayCurrent.getMonth();
-
-            let previousBal = null;
-            let hasData = false;
+            let y = firstDate.getFullYear(); let m = firstDate.getMonth();
+            const endYear = todayCurrent.getFullYear(); const endMonth = todayCurrent.getMonth();
+            let previousBal = null; let hasData = false;
 
             while (y < endYear || (y === endYear && m <= endMonth)) {
                 if (y === todayCurrent.getFullYear() && m === todayCurrent.getMonth() && todayCurrent.getDate() < 14) break;
-
                 const deadline = new Date(y, m, 14, 23, 59, 59);
                 let inc = 0; let exp = 0;
-
                 sorted.forEach(t => {
                     if (new Date(t.date) <= deadline) {
                         if (t.type === 'income') inc += t.amount;
-                        if (t.type === 'expense') exp += t.amount;
+                        else if (t.type === 'expense' && t.category !== 'Biaya Makan (Harian)') exp += t.amount;
                     }
                 });
-
-                const currentBal = inc - exp;
-                let evaluasi = '-';
-
+                const currentBal = inc - exp; let evaluasi = '-';
                 if (previousBal !== null) {
                     const selisih = currentBal - previousBal;
                     if (selisih > 0) evaluasi = `<span class="badge bg-success bg-opacity-25 text-success border border-success"><i class="bi bi-arrow-up-right"></i> Naik</span>`;
                     else if (selisih < 0) evaluasi = `<span class="badge bg-danger bg-opacity-25 text-danger border border-danger"><i class="bi bi-arrow-down-right"></i> Turun</span>`;
                     else evaluasi = '<span class="badge bg-secondary">Stabil</span>';
                 }
-
-                const namaBulan = deadline.toLocaleDateString('id-ID', { month: 'short', year: 'numeric' });
-                
                 const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td class="ps-3">${namaBulan}</td>
-                    <td class="fw-bold">${formatRp(currentBal)}</td>
-                    <td class="text-center">${evaluasi}</td>
-                `;
+                tr.innerHTML = `<td class="ps-3">${deadline.toLocaleDateString('id-ID', { month: 'short', year: 'numeric' })}</td><td class="fw-bold">${formatRp(currentBal)}</td><td class="text-center">${evaluasi}</td>`;
                 table14.appendChild(tr);
-
-                previousBal = currentBal;
-                hasData = true;
-
-                m++;
-                if (m > 11) { m = 0; y++; }
+                previousBal = currentBal; hasData = true;
+                m++; if (m > 11) { m = 0; y++; }
             }
-
-            if (!hasData) {
-                table14.innerHTML = '<tr><td colspan="3" class="text-center text-muted py-3 small">Tanggal 14 bulan ini belum terlewati</td></tr>';
-            }
+            if (!hasData) table14.innerHTML = '<tr><td colspan="3" class="text-center text-muted py-3 small">Tgl 14 bulan ini belum terlewati</td></tr>';
         }
 
-        // Render UI Keseluruhan
+        document.querySelectorAll('.filter-tab').forEach(radio => { radio.addEventListener('change', (e) => { activeTabFilter = e.target.value; renderApp(); }); });
+        document.getElementById('btn-filter').addEventListener('click', () => {
+            const start = document.getElementById('filter-start').value; const end = document.getElementById('filter-end').value;
+            if(start && end) { activeDateFilter = { start: new Date(`${start}T00:00:00`), end: new Date(`${end}T23:59:59`) }; renderApp(); } else alert('Pilih tanggal mulai dan tanggal akhir!');
+        });
+        document.getElementById('btn-reset-filter').addEventListener('click', () => { document.getElementById('filter-start').value = ''; document.getElementById('filter-end').value = ''; activeDateFilter = null; renderApp(); });
+
         function renderApp() {
             let totalInc = 0; let totalExp = 0;
             tableRecent.innerHTML = '';
+            let displayTransactions = [...transactions];
+            if (activeDateFilter) displayTransactions = displayTransactions.filter(t => { const tDate = new Date(t.date); return tDate >= activeDateFilter.start && tDate <= activeDateFilter.end; });
+            if (activeTabFilter !== 'all') displayTransactions = displayTransactions.filter(t => t.type === activeTabFilter);
 
-            const reversed = [...transactions].sort((a, b) => new Date(b.date) - new Date(a.date));
-            
+            const reversed = displayTransactions.sort((a, b) => new Date(b.date) - new Date(a.date));
             reversed.forEach((t) => {
-                if (t.type === 'income') totalInc += t.amount;
-                if (t.type === 'expense') totalExp += t.amount;
-
-                const d = new Date(t.date);
-                const dateStr = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth()+1).padStart(2, '0')}/${d.getFullYear()}`;
-                
-                const isInc = t.type === 'income';
-                const badge = isInc ? `<span class="badge bg-success"><i class="bi bi-plus"></i> Masuk</span>` : `<span class="badge bg-danger"><i class="bi bi-dash"></i> Keluar</span>`;
-                const amountClass = isInc ? 'text-success' : '';
-
+                const d = new Date(t.date); const dateStr = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth()+1).padStart(2, '0')}/${d.getFullYear()}`;
+                const isInc = t.type === 'income'; const badge = isInc ? `<span class="badge bg-success bg-opacity-10 text-success border border-success"><i class="bi bi-plus"></i></span>` : `<span class="badge bg-danger bg-opacity-10 text-danger border border-danger"><i class="bi bi-dash"></i></span>`;
+                const amountClass = isInc ? 'text-success' : 'text-danger';
                 const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td class="ps-3 small text-muted">${dateStr}</td>
-                    <td>
-                        <div class="fw-bold text-truncate" style="max-width: 150px;">${t.desc}</div>
-                        <div class="small text-muted">${t.category}</div>
-                    </td>
-                    <td>
-                        <div class="fw-bold ${amountClass}">${formatRp(t.amount)}</div>
-                        <div>${badge}</div>
-                    </td>
-                    <td class="text-center">
-                        <button class="btn btn-sm btn-outline-danger del-btn" data-id="${t.id}" title="Hapus"><i class="bi bi-trash3"></i></button>
-                    </td>
-                `;
+                tr.innerHTML = `<td class="ps-3 small text-muted align-middle">${dateStr}</td><td class="align-middle"><div class="fw-bold text-truncate" style="max-width: 150px;">${t.desc}</div><div class="small text-muted">${t.category}</div></td><td class="align-middle"><div class="fw-bold ${amountClass}">${formatRp(t.amount)}</div></td><td class="text-center align-middle"><button class="btn btn-sm btn-outline-danger del-btn border-0" data-id="${t.id}" title="Hapus"><i class="bi bi-trash3"></i></button></td>`;
                 tableRecent.appendChild(tr);
             });
+            if (reversed.length === 0) tableRecent.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-3">Tidak ada data untuk filter ini.</td></tr>';
 
-            document.getElementById('total-balance').innerText = formatRp(totalInc - totalExp);
+            transactions.forEach(t => { if (t.type === 'income') totalInc += t.amount; else if (t.type === 'expense' && t.category !== 'Biaya Makan (Harian)') totalExp += t.amount; });
+            const totalBalance = totalInc - totalExp;
+            document.getElementById('total-balance').innerText = formatRp(totalBalance);
             document.getElementById('total-income').innerText = formatRp(totalInc);
             document.getElementById('total-expense').innerText = formatRp(totalExp);
 
-            // Bind Event Delete
-            document.querySelectorAll('.del-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const id = parseInt(this.getAttribute('data-id'));
-                    if(confirm('Yakin ingin menghapus riwayat transaksi ini?')) {
-                        transactions = transactions.filter(x => x.id !== id);
-                        saveData();
-                    }
-                });
-            });
+            const goalPercentage = Math.min((totalBalance / TARGET_TABUNGAN) * 100, 100);
+            document.getElementById('goal-current').innerText = formatRp(Math.max(totalBalance, 0));
+            document.getElementById('goal-percent').innerText = `${goalPercentage.toFixed(1)}%`;
 
-            calculateHistory14();
-            updateChart();
+            const nowTime = new Date(); const todayStart = new Date(nowTime.getFullYear(), nowTime.getMonth(), nowTime.getDate());
+            let cycleStart, cycleEnd;
+            if (nowTime.getDate() >= 16) { cycleStart = new Date(nowTime.getFullYear(), nowTime.getMonth(), 16); cycleEnd = new Date(nowTime.getFullYear(), nowTime.getMonth() + 1, 15); } 
+            else { cycleStart = new Date(nowTime.getFullYear(), nowTime.getMonth() - 1, 16); cycleEnd = new Date(nowTime.getFullYear(), nowTime.getMonth(), 15); }
+            cycleStart.setHours(0, 0, 0, 0); const cycleEndLimit = new Date(cycleEnd.getFullYear(), cycleEnd.getMonth(), cycleEnd.getDate(), 23, 59, 59);
+
+            const msPerDay = 1000 * 60 * 60 * 24; const remainingDays = Math.floor((cycleEndLimit.getTime() - todayStart.getTime()) / msPerDay);
+            let spentMakan = 0;
+            transactions.forEach(t => { const tDate = new Date(t.date); if (t.type === 'expense' && t.category === 'Biaya Makan (Harian)' && tDate.getTime() >= cycleStart.getTime() && tDate.getTime() <= cycleEndLimit.getTime()) spentMakan += t.amount; });
+
+            const remainMakan = BUDGET_MAKAN - spentMakan; const divDays = remainingDays > 0 ? remainingDays : 1;
+            const dailyLimit = remainMakan > 0 ? Math.floor(remainMakan / divDays) : 0;
+            const makanPercent = Math.min((spentMakan / BUDGET_MAKAN) * 100, 100);
+            
+            document.getElementById('food-daily-limit').innerHTML = `${formatRp(dailyLimit)} <span class="fs-6 fw-normal text-white-50">/ hari</span>`;
+            document.getElementById('food-spent').innerText = formatRp(spentMakan);
+            document.getElementById('food-remain').innerText = formatRp(remainMakan);
+
+            // LOGIKA INTERAKTIF PENGISIAN PROGRESS BAR (DESKTOP/MOBILE)
+            const goalBar = document.getElementById('goal-progress-bar');
+            const foodBar = document.getElementById('food-progress-bar');
+
+            if (isInitialLoad && window.innerWidth > 768) {
+                // Saat pertama dibuka di komputer, set dari 0% baru meluncur naik
+                goalBar.style.width = '0%';
+                foodBar.style.width = '0%';
+                setTimeout(() => {
+                    goalBar.style.width = `${goalPercentage}%`;
+                    foodBar.style.width = `${makanPercent}%`;
+                }, 400); // Eksekusi berjalan sinkron setelah widget muncul
+            } else {
+                // Di HP atau saat update transaksi form biasa, langsung update instan
+                goalBar.style.width = `${goalPercentage}%`;
+                foodBar.style.width = `${makanPercent}%`;
+            }
+            
+            let statusText = `Sisa waktu: ${remainingDays} days. `;
+            const foodProgressBar = document.getElementById('food-progress-bar');
+            foodProgressBar.className = 'progress-bar progress-bar-striped progress-bar-animated'; 
+            if (dailyLimit < 15000 && remainMakan > 0) { statusText += "⚠️ Anggaran menipis, perbanyak bekal."; foodProgressBar.classList.add('bg-danger'); } 
+            else if (remainMakan <= 0) { statusText += "❌ Anggaran makan bulan ini habis!"; foodProgressBar.classList.add('bg-danger'); } 
+            else { statusText += "✅ Kondisi aman terkendali."; foodProgressBar.classList.add('bg-warning'); }
+            document.getElementById('food-status-text').innerText = statusText;
+
+            calculateHistory14(); updateChart();
         }
 
-        function saveData() {
-            localStorage.setItem(DATA_KEY, JSON.stringify(transactions));
-            renderApp();
-        }
+        function saveData() { localStorage.setItem(DATA_KEY, JSON.stringify(transactions)); renderApp(); }
 
-        // Submit Form Baru
         formEl.addEventListener('submit', function(e) {
             e.preventDefault();
-            
-            const selectedDate = dateEl.value;
-            const currentTime = new Date().toISOString().split('T')[1];
-            const finalDate = `${selectedDate}T${currentTime}`;
-
-            const newTx = {
-                id: Date.now(),
-                date: finalDate,
-                type: typeEl.value,
-                category: catEl.value,
-                desc: descEl.value,
-                amount: parseFloat(amountEl.value)
-            };
-
-            transactions.push(newTx);
-            saveData();
-            
-            formEl.reset();
-            const today = new Date();
+            const finalDate = `${dateEl.value}T${new Date().toISOString().split('T')[1]}`;
+            transactions.push({ id: Date.now(), date: finalDate, type: typeEl.value, category: catEl.value, desc: descEl.value, amount: parseFloat(amountEl.value) });
+            saveData(); formEl.reset();
             dateEl.value = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-            typeEl.value = 'expense';
-            updateCategories();
+            typeEl.value = 'expense'; updateCategories();
         });
 
-        // Export JSON
         document.getElementById('btn-export').addEventListener('click', function() {
-            if (transactions.length === 0) { alert('Data transaksi masih kosong.'); return; }
-            const blob = new Blob([JSON.stringify(transactions)], { type: "application/json" });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `Backup_DompetKu_${new Date().toISOString().split('T')[0]}.json`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
+            if (!transactions.length) return alert('Data kosong.');
+            const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(transactions)], { type: "application/json" })); a.download = `Backup_DompetKu_${new Date().toISOString().split('T')[0]}.json`; a.click();
         });
 
-        // Import JSON
         const fileImportEl = document.getElementById('file-import');
         document.getElementById('btn-import-trigger').addEventListener('click', () => fileImportEl.click());
-
         fileImportEl.addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
+            const file = e.target.files[0]; if (!file) return; const reader = new FileReader();
             reader.onload = function(event) {
                 try {
                     const importedData = JSON.parse(event.target.result);
                     if (Array.isArray(importedData)) {
                         const combined = [...transactions, ...importedData];
                         transactions = Array.from(new Set(combined.map(a => a.id))).map(id => combined.find(a => a.id === id));
-                        saveData();
-                        alert('Data berhasil dipulihkan!');
-                    } else alert('File yang diunggah tidak valid.');
+                        saveData(); alert('Data berhasil dipulihkan!');
+                    } else alert('File tidak valid.');
                 } catch (err) { alert('Gagal membaca file JSON!'); }
                 fileImportEl.value = ''; 
-            };
-            reader.readAsText(file);
+            }; reader.readAsText(file);
         });
 
-        // Reset All
-        document.getElementById('btn-reset').addEventListener('click', function() {
-            if(confirm('PERINGATAN KERAS: Seluruh data akan dihapus permanen. Lanjutkan?')) {
-                transactions = [];
-                localStorage.removeItem(DATA_KEY);
-                renderApp();
-                alert('Aplikasi telah di-reset.');
-            }
-        });
+        document.getElementById('btn-reset').addEventListener('click', function() { if(confirm('Seluruh data akan dihapus permanen. Lanjutkan?')) { transactions = []; localStorage.removeItem(DATA_KEY); renderApp(); } });
 
-        // Inisialisasi awal
+        // RUN UTAMA
         renderApp();
+        
+        // NEW: JALANKAN EFEK BERGANTIAN SETELAH PROSES RENDER PERTAMA SELESAI
+        if (window.innerWidth > 768) {
+            const widgets = document.querySelectorAll('.animate-widget');
+            widgets.forEach((widget, index) => {
+                setTimeout(() => {
+                    widget.classList.add('appear');
+                }, index * 100); // Memberikan jeda 100 milidetik antar tumpukan panel
+            });
+        }
+        
+        // Matikan flag initial load setelah siklus render pertama tuntas
+        isInitialLoad = false;
 
-    } catch (error) {
-        alert('Terjadi kesalahan JavaScript: ' + error.message);
-    }
+    } catch (error) { alert('Terjadi kesalahan: ' + error.message); }
 </script>
 </body>
 </html>

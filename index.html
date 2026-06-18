@@ -95,7 +95,7 @@
 
     <div class="sidebar" id="sidebar">
         <div class="sidebar-brand">
-            <i class="bi bi-wallet2 me-2 text-primary"></i> M
+            <i class="bi bi-wallet2 me-2 text-primary"></i> My Cashflow
         </div>
         <div class="p-0 p-md-3">
             <ul class="nav nav-pills flex-column mb-auto">
@@ -618,7 +618,11 @@
             cloudBadge.className = 'badge bg-warning text-dark ms-2 px-2 py-1 shadow-sm';
             
             try {
-                const response = await fetch(SCRIPT_URL);
+                // Perbaikan: Tambahkan metode GET dan redirect
+                const response = await fetch(SCRIPT_URL, {
+                    method: 'GET',
+                    redirect: 'follow'
+                });
                 const cloudData = await response.json();
                 
                 if(Array.isArray(cloudData)) {
@@ -643,10 +647,16 @@
             cloudBadge.className = 'badge bg-primary ms-2 px-2 py-1 shadow-sm';
             
             try {
+                // Perbaikan: Tambahkan mode no-cors dan header text/plain
                 await fetch(SCRIPT_URL, {
                     method: 'POST',
+                    mode: 'no-cors',
+                    headers: {
+                        'Content-Type': 'text/plain'
+                    },
                     body: JSON.stringify(transactions)
                 });
+                
                 cloudBadge.innerHTML = '<i class="bi bi-cloud-check"></i> Tersimpan di Cloud';
                 cloudBadge.className = 'badge bg-success ms-2 px-2 py-1 shadow-sm';
             } catch (err) {

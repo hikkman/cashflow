@@ -647,12 +647,11 @@
             cloudBadge.className = 'badge bg-primary ms-2 px-2 py-1 shadow-sm';
             
             try {
-                // Perbaikan: Tambahkan mode no-cors dan header text/plain
+                // Perbaikan: Hapus no-cors, gunakan header text/plain yang sah
                 await fetch(SCRIPT_URL, {
                     method: 'POST',
-                    mode: 'no-cors',
                     headers: {
-                        'Content-Type': 'text/plain'
+                        'Content-Type': 'text/plain;charset=utf-8'
                     },
                     body: JSON.stringify(transactions)
                 });

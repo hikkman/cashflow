@@ -105,6 +105,11 @@
                     </a>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link nav-btn" data-target="view-overtime">
+                        <i class="bi bi-clock-history me-2"></i> <span>Overtime</span>
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link nav-btn" data-target="view-pengaturan">
                         <i class="bi bi-gear-fill me-2"></i> <span>Pengaturan</span>
                     </a>
@@ -349,7 +354,89 @@
                     </div>
                 </div>
             </div>
+            <div id="view-overtime" class="tab-pane-custom">
+    <!-- Rangkuman Rata-rata & Total Upah -->
+    <div class="row mb-4">
+        <div class="col-md-6 mb-3 mb-md-0 animate-widget">
+            <div class="card h-100 border-start border-warning border-4 shadow-sm">
+                <div class="card-body d-flex align-items-center">
+                    <div class="icon-box bg-warning text-white bg-opacity-75 me-3"><i class="bi bi-stopwatch-fill"></i></div>
+                    <div>
+                        <div class="text-xs fw-bold text-warning text-uppercase mb-1">Total Jam Overtime (Bulan Ini)</div>
+                        <div class="h3 mb-0 fw-bold text-gray-800" id="ot-total-hours">0 Jam</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 animate-widget">
+            <div class="card h-100 border-start border-success border-4 shadow-sm">
+                <div class="card-body d-flex align-items-center">
+                    <div class="icon-box bg-success text-white bg-opacity-75 me-3"><i class="bi bi-cash-stack"></i></div>
+                    <div>
+                        <div class="text-xs fw-bold text-success text-uppercase mb-1">Estimasi Upah (Bulan Ini)</div>
+                        <div class="h3 mb-0 fw-bold text-gray-800" id="ot-total-wage">Rp 0</div>
+                        <div class="small text-muted mt-1">Tarif: <span id="ot-rate-display">Rp 25.000</span> / jam</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
+    <div class="row">
+        <!-- Form Input Overtime -->
+        <div class="col-lg-4 animate-widget">
+            <div class="card mb-4">
+                <div class="card-header bg-dark text-white"><i class="bi bi-plus-circle me-1"></i> Input Overtime</div>
+                <div class="card-body">
+                    <form id="ot-form">
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Tanggal</label>
+                            <input type="date" id="ot-date" class="form-control form-control-sm" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Jumlah Jam</label>
+                            <div class="input-group input-group-sm">
+                                <input type="number" id="ot-hours" class="form-control" min="0.5" step="0.5" placeholder="Contoh: 2.5" required>
+                                <span class="input-group-text">Jam</span>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Keterangan (Opsional)</label>
+                            <input type="text" id="ot-desc" class="form-control form-control-sm" placeholder="Contoh: Lembur target produksi...">
+                        </div>
+                        <button type="submit" class="btn btn-warning text-dark w-100 fw-bold"><i class="bi bi-save me-1"></i> Simpan Overtime</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabel Riwayat Overtime -->
+        <div class="col-lg-8 animate-widget">
+            <div class="card mb-4 h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div class="mb-0 fw-bold"><i class="bi bi-list-task me-1 text-warning"></i> Riwayat Overtime</div>
+                    <input type="month" id="ot-filter-month" class="form-control form-control-sm w-auto">
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive" style="max-height: 350px;">
+                        <table class="table table-hover align-middle mb-0 text-nowrap">
+                            <thead class="table-light sticky-top">
+                                <tr>
+                                    <th class="ps-3">Tanggal</th>
+                                    <th>Keterangan</th>
+                                    <th class="text-center">Jam</th>
+                                    <th class="text-end">Estimasi Upah</th>
+                                    <th class="text-center">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="table-overtime"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
             <div id="view-pengaturan" class="tab-pane-custom">
                 <div class="row">
                     <div class="col-md-6">
@@ -397,6 +484,99 @@
         let activeDateFilter = null; 
         let activeTabFilter = 'all'; 
         let isInitialLoad = true;
+
+        // === KONFIGURASI OVERTIME ===
+const OT_KEY = 'overtime_db';
+let otData = [];
+// Sesuaikan tarif per jam ini dengan standar perusahaan (misal Rp 25.000)
+const TARIF_PER_JAM = 25000; 
+
+// Load data overtime dari LocalStorage
+const savedOT = localStorage.getItem(OT_KEY);
+if (savedOT) { otData = JSON.parse(savedOT); }
+
+// Set default tanggal form overtime ke hari ini
+document.getElementById('ot-date').value = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
+// Set filter bulan ke bulan saat ini
+const currentMonthStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+document.getElementById('ot-filter-month').value = currentMonthStr;
+document.getElementById('ot-rate-display').innerText = formatRp(TARIF_PER_JAM);
+
+// Fungsi Render Overtime
+function renderOvertime() {
+    const tableOt = document.getElementById('table-overtime');
+    tableOt.innerHTML = '';
+    
+    let totalJam = 0;
+    const filterBulan = document.getElementById('ot-filter-month').value; // format: YYYY-MM
+
+    // Filter data berdasarkan bulan yang dipilih & urutkan dari terbaru
+    const filteredOT = otData.filter(ot => ot.date.startsWith(filterBulan))
+                             .sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    filteredOT.forEach(ot => {
+        totalJam += ot.hours;
+        const upah = ot.hours * TARIF_PER_JAM;
+        const d = new Date(ot.date); 
+        const dateStr = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth()+1).padStart(2, '0')}/${d.getFullYear()}`;
+        
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td class="ps-3 small text-muted align-middle">${dateStr}</td>
+            <td class="align-middle text-truncate" style="max-width: 150px;">${ot.desc || '-'}</td>
+            <td class="align-middle text-center fw-bold text-warning">${ot.hours}</td>
+            <td class="align-middle text-end fw-bold text-success">${formatRp(upah)}</td>
+            <td class="text-center align-middle">
+                <button class="btn btn-sm btn-outline-danger del-ot-btn border-0" data-id="${ot.id}" title="Hapus"><i class="bi bi-trash3"></i></button>
+            </td>
+        `;
+        tableOt.appendChild(tr);
+    });
+
+    if (filteredOT.length === 0) {
+        tableOt.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-3">Belum ada data lembur di bulan ini.</td></tr>';
+    }
+
+    // Update Kartu Rangkuman
+    document.getElementById('ot-total-hours').innerText = `${totalJam} Jam`;
+    document.getElementById('ot-total-wage').innerText = formatRp(totalJam * TARIF_PER_JAM);
+}
+
+// Event Submit Form Overtime
+document.getElementById('ot-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const newOT = {
+        id: Date.now(),
+        date: document.getElementById('ot-date').value,
+        hours: parseFloat(document.getElementById('ot-hours').value),
+        desc: document.getElementById('ot-desc').value
+    };
+    otData.push(newOT);
+    localStorage.setItem(OT_KEY, JSON.stringify(otData));
+    
+    document.getElementById('ot-hours').value = '';
+    document.getElementById('ot-desc').value = '';
+    renderOvertime();
+});
+
+// Event Hapus Overtime
+document.getElementById('table-overtime').addEventListener('click', function(e) {
+    if (e.target.closest('.del-ot-btn')) {
+        const btn = e.target.closest('.del-ot-btn');
+        if(confirm('Yakin ingin menghapus riwayat overtime ini?')) {
+            otData = otData.filter(x => x.id !== parseInt(btn.getAttribute('data-id')));
+            localStorage.setItem(OT_KEY, JSON.stringify(otData));
+            renderOvertime();
+        }
+    }
+});
+
+// Event Ganti Filter Bulan
+document.getElementById('ot-filter-month').addEventListener('change', renderOvertime);
+
+// Panggil renderOvertime saat inisialisasi aplikasi (letakkan bersama renderApp() di bawah)
+renderOvertime();
 
         const sidebar = document.getElementById('sidebar');
         document.getElementById('desktop-toggle-btn').addEventListener('click', () => { sidebar.classList.toggle('collapsed'); });

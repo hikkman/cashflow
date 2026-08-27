@@ -820,11 +820,28 @@
         });
 
         // ==========================================
-        // LOGIKA OVERTIME (LEMBUR)
+        // LOGIKA OVERTIME (LEMBUR) DENGAN TABEL OTOMATIS
         // ==========================================
         const OT_KEY = 'overtime_db';
         let otData = [];
-        const TARIF_PER_JAM = 25000; // Tarif lembur per jam
+
+        // 1. Definisikan Tabel Upah Lembur Anda di sini
+        const TABEL_UPAH_LEMBUR = {
+            2: 115922,
+            3: 182164,
+            7: 463689,
+            8: 563051,
+            10: 828017,
+            11: 960499
+        };
+
+        // Fungsi pencocokan otomatis
+        function hitungUpahLembur(jam) {
+            if (TABEL_UPAH_LEMBUR[jam]) {
+                return TABEL_UPAH_LEMBUR[jam]; // Jika ada di tabel, gunakan nilainya
+            }
+            return 0; // Jika jam tidak ada di tabel, dihitung Rp 0
+        }
 
         const savedOT = localStorage.getItem(OT_KEY);
         if (savedOT) { otData = JSON.parse(savedOT); }
@@ -833,13 +850,16 @@
         
         const currentMonthStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
         document.getElementById('ot-filter-month').value = currentMonthStr;
-        document.getElementById('ot-rate-display').innerText = formatRp(TARIF_PER_JAM);
+        
+        // Ubah label tarif di UI
+        document.getElementById('ot-rate-display').innerText = "Sesuai Tabel Perusahaan";
 
         function renderOvertime() {
             const tableOt = document.getElementById('table-overtime');
             tableOt.innerHTML = '';
             
             let totalJam = 0;
+            let totalUpahBulanan = 0; // Variabel baru untuk menampung total dari tabel
             const filterBulan = document.getElementById('ot-filter-month').value; 
 
             const filteredOT = otData.filter(ot => ot.date.startsWith(filterBulan))
@@ -847,7 +867,9 @@
 
             filteredOT.forEach(ot => {
                 totalJam += ot.hours;
-                const upah = ot.hours * TARIF_PER_JAM;
+                const upah = hitungUpahLembur(ot.hours); // Hitung berdasarkan tabel
+                totalUpahBulanan += upah;
+                
                 const d = new Date(ot.date); 
                 const dateStr = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth()+1).padStart(2, '0')}/${d.getFullYear()}`;
                 
@@ -868,16 +890,15 @@
                 tableOt.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-3">Belum ada data lembur di bulan ini.</td></tr>';
             }
 
-            const totalUpah = totalJam * TARIF_PER_JAM;
             document.getElementById('ot-total-hours').innerText = `${totalJam} Jam`;
-            document.getElementById('ot-total-wage').innerText = formatRp(totalUpah);
+            document.getElementById('ot-total-wage').innerText = formatRp(totalUpahBulanan);
 
             // Cek Status Tombol Klaim
             const btnClaim = document.getElementById('btn-claim-ot');
             const descKlaim = `Klaim Uang Lembur ${filterBulan}`;
-            const sudahDiklaim = transactions.some(t => t.desc === descKlaim && t.amount === totalUpah);
+            const sudahDiklaim = transactions.some(t => t.desc === descKlaim && t.amount === totalUpahBulanan);
 
-            if (sudahDiklaim && totalUpah > 0) {
+            if (sudahDiklaim && totalUpahBulanan > 0) {
                 btnClaim.disabled = true;
                 btnClaim.classList.replace('btn-success', 'btn-secondary');
                 btnClaim.innerHTML = '<i class="bi bi-check2-all me-1"></i> Sudah Diklaim';
@@ -890,10 +911,19 @@
 
         document.getElementById('ot-form').addEventListener('submit', function(e) {
             e.preventDefault();
+            const inputJam = parseFloat(document.getElementById('ot-hours').value);
+            
+            // Validasi: Beri peringatan jika jam yang diinput tidak ada di tabel
+            if(!TABEL_UPAH_LEMBUR[inputJam]) {
+                if(!confirm(`Jam lembur (${inputJam} jam) tidak ditemukan di dalam tabel acuan upah. Upah akan tercatat sebagai Rp 0. Tetap lanjutkan?`)) {
+                    return; // Batalkan input jika user klik Cancel
+                }
+            }
+
             const newOT = {
                 id: Date.now(),
                 date: document.getElementById('ot-date').value,
-                hours: parseFloat(document.getElementById('ot-hours').value),
+                hours: inputJam,
                 desc: document.getElementById('ot-desc').value
             };
             otData.push(newOT);
@@ -925,13 +955,17 @@
             if (filteredOT.length === 0) { return alert('Belum ada data lembur di bulan ini untuk diklaim.'); }
 
             let totalJam = 0;
-            filteredOT.forEach(ot => totalJam += ot.hours);
-            const totalUpah = totalJam * TARIF_PER_JAM;
+            let totalUpahBulanan = 0;
+            filteredOT.forEach(ot => {
+                totalJam += ot.hours;
+                totalUpahBulanan += hitungUpahLembur(ot.hours);
+            });
+
+            if (totalUpahBulanan === 0) { return alert('Total upah Rp 0. Cek kembali jam lembur Anda.'); }
 
             const descKlaim = `Klaim Uang Lembur ${filterBulan}`;
             
-            if(confirm(`Masukkan total upah lembur bulan ${filterBulan} sebesar ${formatRp(totalUpah)} ke Pemasukan Dashboard?`)) {
-                // Gunakan jam saat ini agar tidak error
+            if(confirm(`Masukkan total upah lembur bulan ${filterBulan} sebesar ${formatRp(totalUpahBulanan)} ke Pemasukan Dashboard?`)) {
                 const nowTime = new Date().toISOString().split('T')[1] || '00:00:00';
                 const finalDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}T${nowTime}`;
                 
@@ -941,12 +975,12 @@
                     type: 'income', 
                     category: 'Uang Lembur', 
                     desc: descKlaim, 
-                    amount: totalUpah 
+                    amount: totalUpahBulanan 
                 });
                 
-                saveData(); // Save + Sync ke Dashboard
+                saveData(); 
                 alert('Berhasil! Upah lembur telah ditambahkan ke Total Pemasukan.');
-                renderOvertime(); // Memanggil render ulang untuk mematikan tombol
+                renderOvertime(); 
             }
         });
 

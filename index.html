@@ -48,8 +48,8 @@
         .progress-bar { transition: width 1.2rem cubic-bezier(0.4, 0, 0.2, 1); }
         
         .table tbody tr { transition: background-color 0.2s ease; }
-        .del-btn { transition: transform 0.2s ease, color 0.2s ease; }
-        .del-btn:hover { transform: scale(1.2); }
+        .del-btn, .del-ot-btn { transition: transform 0.2s ease, color 0.2s ease; }
+        .del-btn:hover, .del-ot-btn:hover { transform: scale(1.2); }
 
         .chart-container { position: relative; height: 250px; width: 100%; }
 
@@ -139,6 +139,7 @@
                 </button>
             </div>
 
+            <!-- VIEW: DASHBOARD -->
             <div id="view-dashboard" class="tab-pane-custom active">
                 
                 <div class="row mb-4">
@@ -354,89 +355,93 @@
                     </div>
                 </div>
             </div>
+            
+            <!-- VIEW: OVERTIME -->
             <div id="view-overtime" class="tab-pane-custom">
-    <!-- Rangkuman Rata-rata & Total Upah -->
-    <div class="row mb-4">
-        <div class="col-md-6 mb-3 mb-md-0 animate-widget">
-            <div class="card h-100 border-start border-warning border-4 shadow-sm">
-                <div class="card-body d-flex align-items-center">
-                    <div class="icon-box bg-warning text-white bg-opacity-75 me-3"><i class="bi bi-stopwatch-fill"></i></div>
-                    <div>
-                        <div class="text-xs fw-bold text-warning text-uppercase mb-1">Total Jam Overtime (Bulan Ini)</div>
-                        <div class="h3 mb-0 fw-bold text-gray-800" id="ot-total-hours">0 Jam</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6 animate-widget">
-            <div class="card h-100 border-start border-success border-4 shadow-sm">
-                <div class="card-body d-flex align-items-center">
-                    <div class="icon-box bg-success text-white bg-opacity-75 me-3"><i class="bi bi-cash-stack"></i></div>
-                    <div>
-                        <div class="text-xs fw-bold text-success text-uppercase mb-1">Estimasi Upah (Bulan Ini)</div>
-                        <div class="h3 mb-0 fw-bold text-gray-800" id="ot-total-wage">Rp 0</div>
-                        <div class="small text-muted mt-1">Tarif: <span id="ot-rate-display">Rp 25.000</span> / jam</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="row">
-        <!-- Form Input Overtime -->
-        <div class="col-lg-4 animate-widget">
-            <div class="card mb-4">
-                <div class="card-header bg-dark text-white"><i class="bi bi-plus-circle me-1"></i> Input Overtime</div>
-                <div class="card-body">
-                    <form id="ot-form">
-                        <div class="mb-3">
-                            <label class="form-label small fw-bold">Tanggal</label>
-                            <input type="date" id="ot-date" class="form-control form-control-sm" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label small fw-bold">Jumlah Jam</label>
-                            <div class="input-group input-group-sm">
-                                <input type="number" id="ot-hours" class="form-control" min="0.5" step="0.5" placeholder="Contoh: 2.5" required>
-                                <span class="input-group-text">Jam</span>
+                <div class="row mb-4">
+                    <div class="col-md-6 mb-3 mb-md-0 animate-widget">
+                        <div class="card h-100 border-start border-warning border-4 shadow-sm">
+                            <div class="card-body d-flex align-items-center">
+                                <div class="icon-box bg-warning text-white bg-opacity-75 me-3"><i class="bi bi-stopwatch-fill"></i></div>
+                                <div>
+                                    <div class="text-xs fw-bold text-warning text-uppercase mb-1">Total Jam Overtime (Bulan Ini)</div>
+                                    <div class="h3 mb-0 fw-bold text-gray-800" id="ot-total-hours">0 Jam</div>
+                                </div>
                             </div>
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label small fw-bold">Keterangan (Opsional)</label>
-                            <input type="text" id="ot-desc" class="form-control form-control-sm" placeholder="Contoh: Lembur target produksi...">
+                    </div>
+                    <div class="col-md-6 animate-widget">
+                        <div class="card h-100 border-start border-success border-4 shadow-sm">
+                            <div class="card-body d-flex align-items-center">
+                                <div class="icon-box bg-success text-white bg-opacity-75 me-3"><i class="bi bi-cash-stack"></i></div>
+                                <div>
+                                    <div class="text-xs fw-bold text-success text-uppercase mb-1">Estimasi Upah (Bulan Ini)</div>
+                                    <div class="h3 mb-0 fw-bold text-gray-800" id="ot-total-wage">Rp 0</div>
+                                    <div class="small text-muted mt-1">Tarif: <span id="ot-rate-display">Rp 25.000</span> / jam</div>
+                                </div>
+                            </div>
                         </div>
-                        <button type="submit" class="btn btn-warning text-dark w-100 fw-bold"><i class="bi bi-save me-1"></i> Simpan Overtime</button>
-                    </form>
+                    </div>
                 </div>
-            </div>
-        </div>
 
-        <!-- Tabel Riwayat Overtime -->
-        <div class="col-lg-8 animate-widget">
-            <div class="card mb-4 h-100">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <div class="mb-0 fw-bold"><i class="bi bi-list-task me-1 text-warning"></i> Riwayat Overtime</div>
-                    <input type="month" id="ot-filter-month" class="form-control form-control-sm w-auto">
-                </div>
-                <div class="card-body p-0">
-                    <div class="table-responsive" style="max-height: 350px;">
-                        <table class="table table-hover align-middle mb-0 text-nowrap">
-                            <thead class="table-light sticky-top">
-                                <tr>
-                                    <th class="ps-3">Tanggal</th>
-                                    <th>Keterangan</th>
-                                    <th class="text-center">Jam</th>
-                                    <th class="text-end">Estimasi Upah</th>
-                                    <th class="text-center">Aksi</th>
-                                </tr>
-                            </thead>
-                            <tbody id="table-overtime"></tbody>
-                        </table>
+                <div class="row">
+                    <div class="col-lg-4 animate-widget">
+                        <div class="card mb-4">
+                            <div class="card-header bg-dark text-white"><i class="bi bi-plus-circle me-1"></i> Input Overtime</div>
+                            <div class="card-body">
+                                <form id="ot-form">
+                                    <div class="mb-3">
+                                        <label class="form-label small fw-bold">Tanggal</label>
+                                        <input type="date" id="ot-date" class="form-control form-control-sm" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label small fw-bold">Jumlah Jam</label>
+                                        <div class="input-group input-group-sm">
+                                            <input type="number" id="ot-hours" class="form-control" min="0.5" step="0.5" placeholder="Contoh: 2.5" required>
+                                            <span class="input-group-text">Jam</span>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label small fw-bold">Keterangan (Opsional)</label>
+                                        <input type="text" id="ot-desc" class="form-control form-control-sm" placeholder="Contoh: Lembur target produksi...">
+                                    </div>
+                                    <button type="submit" class="btn btn-warning text-dark w-100 fw-bold"><i class="bi bi-save me-1"></i> Simpan Overtime</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-8 animate-widget">
+                        <div class="card mb-4 h-100">
+                            <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+                                <div class="mb-0 fw-bold"><i class="bi bi-list-task me-1 text-warning"></i> Riwayat Overtime</div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <button id="btn-claim-ot" class="btn btn-sm btn-success"><i class="bi bi-wallet2 me-1"></i> Masukkan ke Dashboard</button>
+                                    <input type="month" id="ot-filter-month" class="form-control form-control-sm w-auto">
+                                </div>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="table-responsive" style="max-height: 350px;">
+                                    <table class="table table-hover align-middle mb-0 text-nowrap">
+                                        <thead class="table-light sticky-top">
+                                            <tr>
+                                                <th class="ps-3">Tanggal</th>
+                                                <th>Keterangan</th>
+                                                <th class="text-center">Jam</th>
+                                                <th class="text-end">Estimasi Upah</th>
+                                                <th class="text-center">Aksi</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="table-overtime"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
-</div>
+
+            <!-- VIEW: PENGATURAN -->
             <div id="view-pengaturan" class="tab-pane-custom">
                 <div class="row">
                     <div class="col-md-6">
@@ -464,6 +469,7 @@
                     </div>
                 </div>
             </div>
+
         </div>
     </div>
 </div>
@@ -472,11 +478,12 @@
 
 <script>
     try {
+        // ==========================================
+        // INISIALISASI VARIABEL GLOBAL & DASAR
+        // ==========================================
         const DATA_KEY = 'keuangan_final_db';
         const TARGET_TABUNGAN = 24000000; 
         const BUDGET_MAKAN = 600000; 
-        
-        // URL API CLOUD GOOGLE SHEETS
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwu02uZ-LUwCg8EUZNtb9muPSjnSi-rkAVYNK1FJPJ290iACDjE4hGwBwlAMrZQ-94/exec';
         
         let transactions = [];
@@ -485,99 +492,12 @@
         let activeTabFilter = 'all'; 
         let isInitialLoad = true;
 
-        // === KONFIGURASI OVERTIME ===
-const OT_KEY = 'overtime_db';
-let otData = [];
-// Sesuaikan tarif per jam ini dengan standar perusahaan (misal Rp 25.000)
-const TARIF_PER_JAM = 25000; 
+        const today = new Date();
+        const formatRp = (num) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(num);
 
-// Load data overtime dari LocalStorage
-const savedOT = localStorage.getItem(OT_KEY);
-if (savedOT) { otData = JSON.parse(savedOT); }
-
-// Set default tanggal form overtime ke hari ini
-document.getElementById('ot-date').value = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-
-// Set filter bulan ke bulan saat ini
-const currentMonthStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
-document.getElementById('ot-filter-month').value = currentMonthStr;
-document.getElementById('ot-rate-display').innerText = formatRp(TARIF_PER_JAM);
-
-// Fungsi Render Overtime
-function renderOvertime() {
-    const tableOt = document.getElementById('table-overtime');
-    tableOt.innerHTML = '';
-    
-    let totalJam = 0;
-    const filterBulan = document.getElementById('ot-filter-month').value; // format: YYYY-MM
-
-    // Filter data berdasarkan bulan yang dipilih & urutkan dari terbaru
-    const filteredOT = otData.filter(ot => ot.date.startsWith(filterBulan))
-                             .sort((a, b) => new Date(b.date) - new Date(a.date));
-
-    filteredOT.forEach(ot => {
-        totalJam += ot.hours;
-        const upah = ot.hours * TARIF_PER_JAM;
-        const d = new Date(ot.date); 
-        const dateStr = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth()+1).padStart(2, '0')}/${d.getFullYear()}`;
-        
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td class="ps-3 small text-muted align-middle">${dateStr}</td>
-            <td class="align-middle text-truncate" style="max-width: 150px;">${ot.desc || '-'}</td>
-            <td class="align-middle text-center fw-bold text-warning">${ot.hours}</td>
-            <td class="align-middle text-end fw-bold text-success">${formatRp(upah)}</td>
-            <td class="text-center align-middle">
-                <button class="btn btn-sm btn-outline-danger del-ot-btn border-0" data-id="${ot.id}" title="Hapus"><i class="bi bi-trash3"></i></button>
-            </td>
-        `;
-        tableOt.appendChild(tr);
-    });
-
-    if (filteredOT.length === 0) {
-        tableOt.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-3">Belum ada data lembur di bulan ini.</td></tr>';
-    }
-
-    // Update Kartu Rangkuman
-    document.getElementById('ot-total-hours').innerText = `${totalJam} Jam`;
-    document.getElementById('ot-total-wage').innerText = formatRp(totalJam * TARIF_PER_JAM);
-}
-
-// Event Submit Form Overtime
-document.getElementById('ot-form').addEventListener('submit', function(e) {
-    e.preventDefault();
-    const newOT = {
-        id: Date.now(),
-        date: document.getElementById('ot-date').value,
-        hours: parseFloat(document.getElementById('ot-hours').value),
-        desc: document.getElementById('ot-desc').value
-    };
-    otData.push(newOT);
-    localStorage.setItem(OT_KEY, JSON.stringify(otData));
-    
-    document.getElementById('ot-hours').value = '';
-    document.getElementById('ot-desc').value = '';
-    renderOvertime();
-});
-
-// Event Hapus Overtime
-document.getElementById('table-overtime').addEventListener('click', function(e) {
-    if (e.target.closest('.del-ot-btn')) {
-        const btn = e.target.closest('.del-ot-btn');
-        if(confirm('Yakin ingin menghapus riwayat overtime ini?')) {
-            otData = otData.filter(x => x.id !== parseInt(btn.getAttribute('data-id')));
-            localStorage.setItem(OT_KEY, JSON.stringify(otData));
-            renderOvertime();
-        }
-    }
-});
-
-// Event Ganti Filter Bulan
-document.getElementById('ot-filter-month').addEventListener('change', renderOvertime);
-
-// Panggil renderOvertime saat inisialisasi aplikasi (letakkan bersama renderApp() di bawah)
-renderOvertime();
-
+        // ==========================================
+        // KONFIGURASI UI (TEMA & NAVIGASI)
+        // ==========================================
         const sidebar = document.getElementById('sidebar');
         document.getElementById('desktop-toggle-btn').addEventListener('click', () => { sidebar.classList.toggle('collapsed'); });
         document.getElementById('mobile-menu-btn').addEventListener('click', () => { sidebar.classList.toggle('mobile-show'); });
@@ -598,7 +518,25 @@ renderOvertime();
             applyTheme(currentTheme);
         });
 
-        // 1. MEMUAT DATA CEPAT DARI CACHE (LOCALSTORAGE)
+        document.querySelectorAll('.nav-btn').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tab-pane-custom').forEach(c => c.classList.remove('active'));
+                this.classList.add('active');
+                document.getElementById(this.getAttribute('data-target')).classList.add('active');
+                const titleText = this.querySelector('span') ? this.querySelector('span').innerText : this.innerText;
+                document.getElementById('page-title').innerText = titleText === 'Dashboard' ? 'Dashboard Utama' : titleText;
+                
+                if (window.innerWidth <= 768) { sidebar.classList.remove('mobile-show'); }
+            });
+        });
+
+        document.getElementById('today-date').innerText = today.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+        // ==========================================
+        // LOGIKA DASHBOARD (TRANSAKSI)
+        // ==========================================
         const savedData = localStorage.getItem(DATA_KEY);
         if (savedData) {
             transactions = JSON.parse(savedData);
@@ -619,25 +557,7 @@ renderOvertime();
         const tableRecent = document.getElementById('table-recent');
         const table14 = document.getElementById('table-history-14');
 
-        const today = new Date();
         dateEl.value = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-        
-        const formatRp = (num) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(num);
-        document.getElementById('today-date').innerText = new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-
-        document.querySelectorAll('.nav-btn').forEach(btn => {
-            btn.addEventListener('click', function(e) {
-                e.preventDefault();
-                document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-                document.querySelectorAll('.tab-pane-custom').forEach(c => c.classList.remove('active'));
-                this.classList.add('active');
-                document.getElementById(this.getAttribute('data-target')).classList.add('active');
-                const titleText = this.querySelector('span') ? this.querySelector('span').innerText : this.innerText;
-                document.getElementById('page-title').innerText = titleText === 'Dashboard' ? 'Dashboard Utama' : titleText;
-                
-                if (window.innerWidth <= 768) { sidebar.classList.remove('mobile-show'); }
-            });
-        });
 
         function updateCategories() {
             catEl.innerHTML = '';
@@ -727,7 +647,7 @@ renderOvertime();
             const reversed = displayTransactions.sort((a, b) => new Date(b.date) - new Date(a.date));
             reversed.forEach((t) => {
                 const d = new Date(t.date); const dateStr = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth()+1).padStart(2, '0')}/${d.getFullYear()}`;
-                const isInc = t.type === 'income'; const badge = isInc ? `<span class="badge bg-success bg-opacity-10 text-success border border-success"><i class="bi bi-plus"></i></span>` : `<span class="badge bg-danger bg-opacity-10 text-danger border border-danger"><i class="bi bi-dash"></i></span>`;
+                const isInc = t.type === 'income';
                 const amountClass = isInc ? 'text-success' : 'text-danger';
                 const tr = document.createElement('tr');
                 tr.innerHTML = `<td class="ps-3 small text-muted align-middle">${dateStr}</td><td class="align-middle"><div class="fw-bold text-truncate" style="max-width: 150px;">${t.desc}</div><div class="small text-muted">${t.category}</div></td><td class="align-middle"><div class="fw-bold ${amountClass}">${formatRp(t.amount)}</div></td><td class="text-center align-middle"><button class="btn btn-sm btn-outline-danger del-btn border-0" data-id="${t.id}" title="Hapus"><i class="bi bi-trash3"></i></button></td>`;
@@ -778,19 +698,22 @@ renderOvertime();
                 foodBar.style.width = `${makanPercent}%`;
             }
             
-            let statusText = `Sisa waktu: ${remainingDays} days. `;
+            let statusText = `Sisa waktu: ${remainingDays} hari. `;
             const foodProgressBar = document.getElementById('food-progress-bar');
             foodProgressBar.className = 'progress-bar progress-bar-striped progress-bar-animated'; 
             if (dailyLimit < 15000 && remainMakan > 0) { statusText += "⚠️ Anggaran menipis, perbanyak bekal."; foodProgressBar.classList.add('bg-danger'); } 
-            else if (remainMakan <= 0) { statusText += "❌ Anggaran makan bulan ini habis!"; foodProgressBar.classList.add('bg-danger'); } 
+            else if (remainMakan <= 0) { statusText += "❌ Anggaran makan habis!"; foodProgressBar.classList.add('bg-danger'); } 
             else { statusText += "✅ Kondisi aman terkendali."; foodProgressBar.classList.add('bg-warning'); }
             document.getElementById('food-status-text').innerText = statusText;
 
             calculateHistory14(); updateChart();
+            
+            // Re-render overtime so claim button updates if claim just happened
+            if(typeof renderOvertime === 'function') renderOvertime();
         }
 
         // ==========================================
-        // 2. FUNGSI SINKRONISASI KE GOOGLE SHEETS
+        // FUNGSI CLOUD GOOGLE SHEETS
         // ==========================================
         async function loadDataFromCloud() {
             const cloudBadge = document.getElementById('cloud-status');
@@ -798,16 +721,11 @@ renderOvertime();
             cloudBadge.className = 'badge bg-warning text-dark ms-2 px-2 py-1 shadow-sm';
             
             try {
-                // Perbaikan: Tambahkan metode GET dan redirect
-                const response = await fetch(SCRIPT_URL, {
-                    method: 'GET',
-                    redirect: 'follow'
-                });
+                const response = await fetch(SCRIPT_URL, { method: 'GET', redirect: 'follow' });
                 const cloudData = await response.json();
                 
                 if(Array.isArray(cloudData)) {
                     transactions = cloudData;
-                    // Simpan data terbaru dari Cloud ke LocalStorage (Cache)
                     localStorage.setItem(DATA_KEY, JSON.stringify(transactions));
                     renderApp();
                     
@@ -827,12 +745,9 @@ renderOvertime();
             cloudBadge.className = 'badge bg-primary ms-2 px-2 py-1 shadow-sm';
             
             try {
-                // Perbaikan: Hapus no-cors, gunakan header text/plain yang sah
                 await fetch(SCRIPT_URL, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'text/plain;charset=utf-8'
-                    },
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify(transactions)
                 });
                 
@@ -845,15 +760,15 @@ renderOvertime();
             }
         }
 
-        // Modifikasi fungsi saveData agar mengirim data ke Cloud juga
         function saveData() { 
-            // Simpan ke Cache Lokal dulu agar UI instan
             localStorage.setItem(DATA_KEY, JSON.stringify(transactions)); 
             renderApp(); 
-            // Kirim ke Google Sheets di background
             syncDataToCloud();
         }
 
+        // ==========================================
+        // EVENT FORM DASHBOARD & PENGATURAN
+        // ==========================================
         formEl.addEventListener('submit', function(e) {
             e.preventDefault();
             const finalDate = `${dateEl.value}T${new Date().toISOString().split('T')[1]}`;
@@ -863,7 +778,6 @@ renderOvertime();
             typeEl.value = 'expense'; updateCategories();
         });
 
-        // Event listener hapus data diubah agar ikut tersinkronisasi
         document.getElementById('table-recent').addEventListener('click', function(e) {
             if (e.target.closest('.del-btn')) {
                 const btn = e.target.closest('.del-btn');
@@ -900,21 +814,153 @@ renderOvertime();
             if(confirm('Seluruh data akan dihapus permanen dari perangkat dan Cloud. Lanjutkan?')) { 
                 transactions = []; 
                 localStorage.removeItem(DATA_KEY); 
-                saveData(); // Menimpa Google Sheet dengan array kosong
+                saveData();
                 alert('Aplikasi telah direset.');
             } 
         });
 
+        // ==========================================
+        // LOGIKA OVERTIME (LEMBUR)
+        // ==========================================
+        const OT_KEY = 'overtime_db';
+        let otData = [];
+        const TARIF_PER_JAM = 25000; // Tarif lembur per jam
+
+        const savedOT = localStorage.getItem(OT_KEY);
+        if (savedOT) { otData = JSON.parse(savedOT); }
+
+        document.getElementById('ot-date').value = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+        
+        const currentMonthStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+        document.getElementById('ot-filter-month').value = currentMonthStr;
+        document.getElementById('ot-rate-display').innerText = formatRp(TARIF_PER_JAM);
+
+        function renderOvertime() {
+            const tableOt = document.getElementById('table-overtime');
+            tableOt.innerHTML = '';
+            
+            let totalJam = 0;
+            const filterBulan = document.getElementById('ot-filter-month').value; 
+
+            const filteredOT = otData.filter(ot => ot.date.startsWith(filterBulan))
+                                     .sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            filteredOT.forEach(ot => {
+                totalJam += ot.hours;
+                const upah = ot.hours * TARIF_PER_JAM;
+                const d = new Date(ot.date); 
+                const dateStr = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth()+1).padStart(2, '0')}/${d.getFullYear()}`;
+                
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="ps-3 small text-muted align-middle">${dateStr}</td>
+                    <td class="align-middle text-truncate" style="max-width: 150px;">${ot.desc || '-'}</td>
+                    <td class="align-middle text-center fw-bold text-warning">${ot.hours}</td>
+                    <td class="align-middle text-end fw-bold text-success">${formatRp(upah)}</td>
+                    <td class="text-center align-middle">
+                        <button class="btn btn-sm btn-outline-danger del-ot-btn border-0" data-id="${ot.id}" title="Hapus"><i class="bi bi-trash3"></i></button>
+                    </td>
+                `;
+                tableOt.appendChild(tr);
+            });
+
+            if (filteredOT.length === 0) {
+                tableOt.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-3">Belum ada data lembur di bulan ini.</td></tr>';
+            }
+
+            const totalUpah = totalJam * TARIF_PER_JAM;
+            document.getElementById('ot-total-hours').innerText = `${totalJam} Jam`;
+            document.getElementById('ot-total-wage').innerText = formatRp(totalUpah);
+
+            // Cek Status Tombol Klaim
+            const btnClaim = document.getElementById('btn-claim-ot');
+            const descKlaim = `Klaim Uang Lembur ${filterBulan}`;
+            const sudahDiklaim = transactions.some(t => t.desc === descKlaim && t.amount === totalUpah);
+
+            if (sudahDiklaim && totalUpah > 0) {
+                btnClaim.disabled = true;
+                btnClaim.classList.replace('btn-success', 'btn-secondary');
+                btnClaim.innerHTML = '<i class="bi bi-check2-all me-1"></i> Sudah Diklaim';
+            } else {
+                btnClaim.disabled = false;
+                btnClaim.classList.replace('btn-secondary', 'btn-success');
+                btnClaim.innerHTML = '<i class="bi bi-wallet2 me-1"></i> Masukkan ke Dashboard';
+            }
+        }
+
+        document.getElementById('ot-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const newOT = {
+                id: Date.now(),
+                date: document.getElementById('ot-date').value,
+                hours: parseFloat(document.getElementById('ot-hours').value),
+                desc: document.getElementById('ot-desc').value
+            };
+            otData.push(newOT);
+            localStorage.setItem(OT_KEY, JSON.stringify(otData));
+            
+            document.getElementById('ot-hours').value = '';
+            document.getElementById('ot-desc').value = '';
+            renderOvertime();
+        });
+
+        document.getElementById('table-overtime').addEventListener('click', function(e) {
+            if (e.target.closest('.del-ot-btn')) {
+                const btn = e.target.closest('.del-ot-btn');
+                if(confirm('Yakin ingin menghapus riwayat overtime ini?')) {
+                    otData = otData.filter(x => x.id !== parseInt(btn.getAttribute('data-id')));
+                    localStorage.setItem(OT_KEY, JSON.stringify(otData));
+                    renderOvertime();
+                }
+            }
+        });
+
+        document.getElementById('ot-filter-month').addEventListener('change', renderOvertime);
+
+        // Fungsi Klaim Upah Lembur ke Dashboard
+        document.getElementById('btn-claim-ot').addEventListener('click', function() {
+            const filterBulan = document.getElementById('ot-filter-month').value; 
+            const filteredOT = otData.filter(ot => ot.date.startsWith(filterBulan));
+            
+            if (filteredOT.length === 0) { return alert('Belum ada data lembur di bulan ini untuk diklaim.'); }
+
+            let totalJam = 0;
+            filteredOT.forEach(ot => totalJam += ot.hours);
+            const totalUpah = totalJam * TARIF_PER_JAM;
+
+            const descKlaim = `Klaim Uang Lembur ${filterBulan}`;
+            
+            if(confirm(`Masukkan total upah lembur bulan ${filterBulan} sebesar ${formatRp(totalUpah)} ke Pemasukan Dashboard?`)) {
+                // Gunakan jam saat ini agar tidak error
+                const nowTime = new Date().toISOString().split('T')[1] || '00:00:00';
+                const finalDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}T${nowTime}`;
+                
+                transactions.push({ 
+                    id: Date.now(), 
+                    date: finalDate, 
+                    type: 'income', 
+                    category: 'Uang Lembur', 
+                    desc: descKlaim, 
+                    amount: totalUpah 
+                });
+                
+                saveData(); // Save + Sync ke Dashboard
+                alert('Berhasil! Upah lembur telah ditambahkan ke Total Pemasukan.');
+                renderOvertime(); // Memanggil render ulang untuk mematikan tombol
+            }
+        });
+
+        // ==========================================
         // 3. INISIALISASI APLIKASI
-        renderApp(); // Render instan menggunakan memori lokal
-        loadDataFromCloud(); // Tarik data terbaru dari Cloud secara asinkron
+        // ==========================================
+        renderApp(); 
+        renderOvertime(); 
+        loadDataFromCloud(); 
         
         if (window.innerWidth > 768) {
             const widgets = document.querySelectorAll('.animate-widget');
             widgets.forEach((widget, index) => {
-                setTimeout(() => {
-                    widget.classList.add('appear');
-                }, index * 100); 
+                setTimeout(() => { widget.classList.add('appear'); }, index * 100); 
             });
         }
         

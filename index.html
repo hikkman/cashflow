@@ -377,7 +377,7 @@
                                 <div>
                                     <div class="text-xs fw-bold text-success text-uppercase mb-1">Estimasi Upah (Bulan Ini)</div>
                                     <div class="h3 mb-0 fw-bold text-gray-800" id="ot-total-wage">Rp 0</div>
-                                    <div class="small text-muted mt-1">Tarif: <span id="ot-rate-display">Rp 25.000</span> / jam</div>
+                                    <div class="small text-muted mt-1">Tarif: <span id="ot-rate-display">Tabel Perusahaan</span></div>
                                 </div>
                             </div>
                         </div>
@@ -397,7 +397,7 @@
                                     <div class="mb-3">
                                         <label class="form-label small fw-bold">Jumlah Jam</label>
                                         <div class="input-group input-group-sm">
-                                            <input type="number" id="ot-hours" class="form-control" min="0.5" step="0.5" placeholder="Contoh: 2.5" required>
+                                            <input type="number" id="ot-hours" class="form-control" min="0.5" step="0.5" placeholder="Contoh: 2" required>
                                             <span class="input-group-text">Jam</span>
                                         </div>
                                     </div>
@@ -479,11 +479,13 @@
 <script>
     try {
         // ==========================================
-        // INISIALISASI VARIABEL GLOBAL & DASAR
+        // 1. INISIALISASI VARIABEL GLOBAL & DASAR
         // ==========================================
         const DATA_KEY = 'keuangan_final_db';
         const TARGET_TABUNGAN = 24000000; 
         const BUDGET_MAKAN = 600000; 
+        
+        // URL API CLOUD GOOGLE SHEETS
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxOyu88A16As2tiWvvS56ew3Q5wihYEXKLIzPcSlGv-RY0OiE7a1ywSV0IcyUmrZBqa/exec';
         
         let transactions = [];
@@ -496,7 +498,7 @@
         const formatRp = (num) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(num);
 
         // ==========================================
-        // KONFIGURASI UI (TEMA & NAVIGASI)
+        // 2. KONFIGURASI UI (TEMA & NAVIGASI)
         // ==========================================
         const sidebar = document.getElementById('sidebar');
         document.getElementById('desktop-toggle-btn').addEventListener('click', () => { sidebar.classList.toggle('collapsed'); });
@@ -535,7 +537,7 @@
         document.getElementById('today-date').innerText = today.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
         // ==========================================
-        // LOGIKA DASHBOARD (TRANSAKSI)
+        // 3. LOGIKA DATA TRANSAKSI (DASHBOARD)
         // ==========================================
         const savedData = localStorage.getItem(DATA_KEY);
         if (savedData) {
@@ -708,185 +710,18 @@
 
             calculateHistory14(); updateChart();
             
-            // Re-render overtime so claim button updates if claim just happened
             if(typeof renderOvertime === 'function') renderOvertime();
         }
 
         // ==========================================
-        // FUNGSI CLOUD GOOGLE SHEETS (DIPERBARUI UNTUK OVERTIME)
-        // ==========================================
-        async function loadDataFromCloud() {
-            const cloudBadge = document.getElementById('cloud-status');
-            cloudBadge.innerHTML = '<i class="bi bi-arrow-repeat"></i> Menyinkronkan...';
-            cloudBadge.className = 'badge bg-warning text-dark ms-2 px-2 py-1 shadow-sm';
-            
-            try {
-                const response = await fetch(SCRIPT_URL, { method: 'GET', redirect: 'follow' });
-                const cloudData = await response.json();
-                
-                // Jika membaca format baru dari Cloud
-                if(cloudData && cloudData.transactions) {
-                    transactions = cloudData.transactions;
-                    otData = cloudData.overtime || [];
-                    
-                    localStorage.setItem(DATA_KEY, JSON.stringify(transactions));
-                    localStorage.setItem(OT_KEY, JSON.stringify(otData));
-                    
-                    renderApp();
-                    if(typeof renderOvertime === 'function') renderOvertime();
-                    
-                    cloudBadge.innerHTML = '<i class="bi bi-cloud-check"></i> Sinkronisasi Selesai';
-                    cloudBadge.className = 'badge bg-success ms-2 px-2 py-1 shadow-sm';
-                } 
-                // Fallback jika membaca format lama
-                else if (Array.isArray(cloudData)) {
-                    transactions = cloudData;
-                    localStorage.setItem(DATA_KEY, JSON.stringify(transactions));
-                    renderApp();
-                    cloudBadge.innerHTML = '<i class="bi bi-cloud-check"></i> Sinkronisasi Selesai';
-                    cloudBadge.className = 'badge bg-success ms-2 px-2 py-1 shadow-sm';
-                }
-            } catch (err) {
-                cloudBadge.innerHTML = '<i class="bi bi-cloud-slash"></i> Mode Offline';
-                cloudBadge.className = 'badge bg-secondary ms-2 px-2 py-1 shadow-sm';
-            }
-        }
-
-        async function syncDataToCloud() {
-            const cloudBadge = document.getElementById('cloud-status');
-            cloudBadge.innerHTML = '<i class="bi bi-cloud-upload"></i> Menyimpan...';
-            cloudBadge.className = 'badge bg-primary ms-2 px-2 py-1 shadow-sm';
-            
-            try {
-                // Bungkus kedua data agar terbaca oleh Google Apps Script
-                const payload = {
-                    transactions: transactions,
-                    overtime: otData
-                };
-
-                await fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify(payload)
-                });
-                
-                cloudBadge.innerHTML = '<i class="bi bi-cloud-check"></i> Tersimpan di Cloud';
-                cloudBadge.className = 'badge bg-success ms-2 px-2 py-1 shadow-sm';
-            } catch (err) {
-                cloudBadge.innerHTML = '<i class="bi bi-cloud-slash"></i> Tertunda (Offline)';
-                cloudBadge.className = 'badge bg-danger ms-2 px-2 py-1 shadow-sm';
-            }
-        }
-
-        function saveData() { 
-            localStorage.setItem(DATA_KEY, JSON.stringify(transactions)); 
-            renderApp(); 
-            syncDataToCloud();
-        }
-
-        // --- UPDATE EVENT FORM OVERTIME AGAR IKUT SINKRONISASI ---
-        document.getElementById('ot-form').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const inputJam = parseFloat(document.getElementById('ot-hours').value);
-            
-            if(!TABEL_UPAH_LEMBUR[inputJam]) {
-                if(!confirm(`Jam lembur (${inputJam} jam) tidak ditemukan di dalam tabel acuan upah. Upah akan tercatat sebagai Rp 0. Tetap lanjutkan?`)) {
-                    return; 
-                }
-            }
-
-            const newOT = {
-                id: Date.now(),
-                date: document.getElementById('ot-date').value,
-                hours: inputJam,
-                desc: document.getElementById('ot-desc').value
-            };
-            otData.push(newOT);
-            
-            // Simpan lokal dan tembak ke cloud
-            localStorage.setItem(OT_KEY, JSON.stringify(otData));
-            renderOvertime();
-            syncDataToCloud(); 
-            
-            document.getElementById('ot-hours').value = '';
-            document.getElementById('ot-desc').value = '';
-        });
-
-        // --- UPDATE EVENT HAPUS OVERTIME AGAR IKUT SINKRONISASI ---
-        document.getElementById('table-overtime').addEventListener('click', function(e) {
-            if (e.target.closest('.del-ot-btn')) {
-                const btn = e.target.closest('.del-ot-btn');
-                if(confirm('Yakin ingin menghapus riwayat overtime ini?')) {
-                    otData = otData.filter(x => x.id !== parseInt(btn.getAttribute('data-id')));
-                    
-                    // Simpan lokal dan tembak ke cloud
-                    localStorage.setItem(OT_KEY, JSON.stringify(otData));
-                    renderOvertime();
-                    syncDataToCloud();
-                }
-            }
-        });
-
-        // ==========================================
-        // EVENT FORM DASHBOARD & PENGATURAN
-        // ==========================================
-        formEl.addEventListener('submit', function(e) {
-            e.preventDefault();
-            const finalDate = `${dateEl.value}T${new Date().toISOString().split('T')[1]}`;
-            transactions.push({ id: Date.now(), date: finalDate, type: typeEl.value, category: catEl.value, desc: descEl.value, amount: parseFloat(amountEl.value) });
-            saveData(); formEl.reset();
-            dateEl.value = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-            typeEl.value = 'expense'; updateCategories();
-        });
-
-        document.getElementById('table-recent').addEventListener('click', function(e) {
-            if (e.target.closest('.del-btn')) {
-                const btn = e.target.closest('.del-btn');
-                if(confirm('Yakin ingin menghapus riwayat transaksi ini?')) {
-                    transactions = transactions.filter(x => x.id !== parseInt(btn.getAttribute('data-id')));
-                    saveData();
-                }
-            }
-        });
-
-        document.getElementById('btn-export').addEventListener('click', function() {
-            if (!transactions.length) return alert('Data kosong.');
-            const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(transactions)], { type: "application/json" })); a.download = `Backup_DompetKu_${new Date().toISOString().split('T')[0]}.json`; a.click();
-        });
-
-        const fileImportEl = document.getElementById('file-import');
-        document.getElementById('btn-import-trigger').addEventListener('click', () => fileImportEl.click());
-        fileImportEl.addEventListener('change', function(e) {
-            const file = e.target.files[0]; if (!file) return; const reader = new FileReader();
-            reader.onload = function(event) {
-                try {
-                    const importedData = JSON.parse(event.target.result);
-                    if (Array.isArray(importedData)) {
-                        const combined = [...transactions, ...importedData];
-                        transactions = Array.from(new Set(combined.map(a => a.id))).map(id => combined.find(a => a.id === id));
-                        saveData(); alert('Data berhasil dipulihkan dan disinkronisasi ke Cloud!');
-                    } else alert('File tidak valid.');
-                } catch (err) { alert('Gagal membaca file JSON!'); }
-                fileImportEl.value = ''; 
-            }; reader.readAsText(file);
-        });
-
-        document.getElementById('btn-reset').addEventListener('click', function() { 
-            if(confirm('Seluruh data akan dihapus permanen dari perangkat dan Cloud. Lanjutkan?')) { 
-                transactions = []; 
-                localStorage.removeItem(DATA_KEY); 
-                saveData();
-                alert('Aplikasi telah direset.');
-            } 
-        });
-
-        // ==========================================
-        // LOGIKA OVERTIME (LEMBUR) DENGAN TABEL OTOMATIS
+        // 4. LOGIKA DATA OVERTIME (LEMBUR)
         // ==========================================
         const OT_KEY = 'overtime_db';
         let otData = [];
 
-        // 1. Definisikan Tabel Upah Lembur Anda di sini
+        // --> TABEL UPAH LEMBUR
+        // Jika Anda butuh nominal untuk 1 Jam, 4 jam, atau 5 Jam, Anda bisa menambahkannya 
+        // di bawah ini. Pastikan formatnya:  AngkaJam: NominalRupiah,
         const TABEL_UPAH_LEMBUR = {
             2: 115922,
             3: 182164,
@@ -896,31 +731,26 @@
             11: 960499
         };
 
-        // Fungsi pencocokan otomatis
         function hitungUpahLembur(jam) {
-            if (TABEL_UPAH_LEMBUR[jam]) {
-                return TABEL_UPAH_LEMBUR[jam]; // Jika ada di tabel, gunakan nilainya
+            if (TABEL_UPAH_LEMBUR[jam] !== undefined) {
+                return TABEL_UPAH_LEMBUR[jam]; 
             }
-            return 0; // Jika jam tidak ada di tabel, dihitung Rp 0
+            return 0; 
         }
 
         const savedOT = localStorage.getItem(OT_KEY);
         if (savedOT) { otData = JSON.parse(savedOT); }
 
         document.getElementById('ot-date').value = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-        
         const currentMonthStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
         document.getElementById('ot-filter-month').value = currentMonthStr;
-        
-        // Ubah label tarif di UI
-        document.getElementById('ot-rate-display').innerText = "Sesuai Tabel Perusahaan";
 
         function renderOvertime() {
             const tableOt = document.getElementById('table-overtime');
             tableOt.innerHTML = '';
             
             let totalJam = 0;
-            let totalUpahBulanan = 0; // Variabel baru untuk menampung total dari tabel
+            let totalUpahBulanan = 0; 
             const filterBulan = document.getElementById('ot-filter-month').value; 
 
             const filteredOT = otData.filter(ot => ot.date.startsWith(filterBulan))
@@ -928,7 +758,7 @@
 
             filteredOT.forEach(ot => {
                 totalJam += ot.hours;
-                const upah = hitungUpahLembur(ot.hours); // Hitung berdasarkan tabel
+                const upah = hitungUpahLembur(ot.hours); 
                 totalUpahBulanan += upah;
                 
                 const d = new Date(ot.date); 
@@ -954,7 +784,6 @@
             document.getElementById('ot-total-hours').innerText = `${totalJam} Jam`;
             document.getElementById('ot-total-wage').innerText = formatRp(totalUpahBulanan);
 
-            // Cek Status Tombol Klaim
             const btnClaim = document.getElementById('btn-claim-ot');
             const descKlaim = `Klaim Uang Lembur ${filterBulan}`;
             const sudahDiklaim = transactions.some(t => t.desc === descKlaim && t.amount === totalUpahBulanan);
@@ -970,15 +799,108 @@
             }
         }
 
+        // ==========================================
+        // 5. FUNGSI SINKRONISASI CLOUD GOOGLE SHEETS
+        // ==========================================
+        async function loadDataFromCloud() {
+            const cloudBadge = document.getElementById('cloud-status');
+            cloudBadge.innerHTML = '<i class="bi bi-arrow-repeat"></i> Menyinkronkan...';
+            cloudBadge.className = 'badge bg-warning text-dark ms-2 px-2 py-1 shadow-sm';
+            
+            try {
+                const response = await fetch(SCRIPT_URL, { method: 'GET', redirect: 'follow' });
+                const cloudData = await response.json();
+                
+                if(cloudData && cloudData.transactions) {
+                    transactions = cloudData.transactions;
+                    otData = cloudData.overtime || [];
+                    
+                    localStorage.setItem(DATA_KEY, JSON.stringify(transactions));
+                    localStorage.setItem(OT_KEY, JSON.stringify(otData));
+                    
+                    renderApp();
+                    if(typeof renderOvertime === 'function') renderOvertime();
+                    
+                    cloudBadge.innerHTML = '<i class="bi bi-cloud-check"></i> Sinkronisasi Selesai';
+                    cloudBadge.className = 'badge bg-success ms-2 px-2 py-1 shadow-sm';
+                } 
+                else if (Array.isArray(cloudData)) {
+                    transactions = cloudData;
+                    localStorage.setItem(DATA_KEY, JSON.stringify(transactions));
+                    renderApp();
+                    cloudBadge.innerHTML = '<i class="bi bi-cloud-check"></i> Sinkronisasi Selesai';
+                    cloudBadge.className = 'badge bg-success ms-2 px-2 py-1 shadow-sm';
+                }
+            } catch (err) {
+                cloudBadge.innerHTML = '<i class="bi bi-cloud-slash"></i> Mode Offline';
+                cloudBadge.className = 'badge bg-secondary ms-2 px-2 py-1 shadow-sm';
+            }
+        }
+
+        async function syncDataToCloud() {
+            const cloudBadge = document.getElementById('cloud-status');
+            cloudBadge.innerHTML = '<i class="bi bi-cloud-upload"></i> Menyimpan...';
+            cloudBadge.className = 'badge bg-primary ms-2 px-2 py-1 shadow-sm';
+            
+            try {
+                const payload = {
+                    transactions: transactions,
+                    overtime: otData
+                };
+
+                await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify(payload)
+                });
+                
+                cloudBadge.innerHTML = '<i class="bi bi-cloud-check"></i> Tersimpan di Cloud';
+                cloudBadge.className = 'badge bg-success ms-2 px-2 py-1 shadow-sm';
+            } catch (err) {
+                cloudBadge.innerHTML = '<i class="bi bi-cloud-slash"></i> Tertunda (Offline)';
+                cloudBadge.className = 'badge bg-danger ms-2 px-2 py-1 shadow-sm';
+            }
+        }
+
+        function saveData() { 
+            localStorage.setItem(DATA_KEY, JSON.stringify(transactions)); 
+            renderApp(); 
+            syncDataToCloud();
+        }
+
+        // ==========================================
+        // 6. EVENT LISTENER (TOMBOL & FORM)
+        // ==========================================
+        
+        // --- TRANSAKSI UTAMA ---
+        formEl.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const finalDate = `${dateEl.value}T${new Date().toISOString().split('T')[1]}`;
+            transactions.push({ id: Date.now(), date: finalDate, type: typeEl.value, category: catEl.value, desc: descEl.value, amount: parseFloat(amountEl.value) });
+            saveData(); formEl.reset();
+            dateEl.value = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+            typeEl.value = 'expense'; updateCategories();
+        });
+
+        document.getElementById('table-recent').addEventListener('click', function(e) {
+            if (e.target.closest('.del-btn')) {
+                const btn = e.target.closest('.del-btn');
+                if(confirm('Yakin ingin menghapus riwayat transaksi ini?')) {
+                    transactions = transactions.filter(x => x.id !== parseInt(btn.getAttribute('data-id')));
+                    saveData();
+                }
+            }
+        });
+
+        // --- OVERTIME (LEMBUR) ---
         document.getElementById('ot-form').addEventListener('submit', function(e) {
             e.preventDefault();
             const inputJam = parseFloat(document.getElementById('ot-hours').value);
             
-            // Validasi: Beri peringatan jika jam yang diinput tidak ada di tabel
-            if(!TABEL_UPAH_LEMBUR[inputJam]) {
-                if(!confirm(`Jam lembur (${inputJam} jam) tidak ditemukan di dalam tabel acuan upah. Upah akan tercatat sebagai Rp 0. Tetap lanjutkan?`)) {
-                    return; // Batalkan input jika user klik Cancel
-                }
+            // VALIDASI STRICT: Cegah jam jika tidak ada di tabel acuan
+            if(TABEL_UPAH_LEMBUR[inputJam] === undefined) {
+                alert(`Gagal menyimpan! Jam lembur (${inputJam} jam) tidak ditemukan di tabel acuan. Silakan masukkan jam yang sesuai (contoh: 2, 3, 7, 8, 10, 11).`);
+                return; // Berhenti seketika, data tidak disave.
             }
 
             const newOT = {
@@ -988,11 +910,14 @@
                 desc: document.getElementById('ot-desc').value
             };
             otData.push(newOT);
+            
+            // Simpan lokal dan sinkron ke cloud
             localStorage.setItem(OT_KEY, JSON.stringify(otData));
+            renderOvertime();
+            syncDataToCloud(); 
             
             document.getElementById('ot-hours').value = '';
             document.getElementById('ot-desc').value = '';
-            renderOvertime();
         });
 
         document.getElementById('table-overtime').addEventListener('click', function(e) {
@@ -1000,15 +925,16 @@
                 const btn = e.target.closest('.del-ot-btn');
                 if(confirm('Yakin ingin menghapus riwayat overtime ini?')) {
                     otData = otData.filter(x => x.id !== parseInt(btn.getAttribute('data-id')));
+                    
                     localStorage.setItem(OT_KEY, JSON.stringify(otData));
                     renderOvertime();
+                    syncDataToCloud();
                 }
             }
         });
 
         document.getElementById('ot-filter-month').addEventListener('change', renderOvertime);
 
-        // Fungsi Klaim Upah Lembur ke Dashboard
         document.getElementById('btn-claim-ot').addEventListener('click', function() {
             const filterBulan = document.getElementById('ot-filter-month').value; 
             const filteredOT = otData.filter(ot => ot.date.startsWith(filterBulan));
@@ -1045,8 +971,57 @@
             }
         });
 
+        // --- PENGATURAN (BACKUP & RESTORE) ---
+        document.getElementById('btn-export').addEventListener('click', function() {
+            if (!transactions.length && !otData.length) return alert('Data kosong.');
+            const payload = { transactions: transactions, overtime: otData };
+            const a = document.createElement('a'); 
+            a.href = URL.createObjectURL(new Blob([JSON.stringify(payload)], { type: "application/json" })); 
+            a.download = `Backup_DompetKu_${new Date().toISOString().split('T')[0]}.json`; 
+            a.click();
+        });
+
+        const fileImportEl = document.getElementById('file-import');
+        document.getElementById('btn-import-trigger').addEventListener('click', () => fileImportEl.click());
+        fileImportEl.addEventListener('change', function(e) {
+            const file = e.target.files[0]; if (!file) return; const reader = new FileReader();
+            reader.onload = function(event) {
+                try {
+                    const importedData = JSON.parse(event.target.result);
+                    
+                    // Mendukung format JSON lama (Array murni) dan format baru (Object {transactions, overtime})
+                    if (Array.isArray(importedData)) {
+                        const combined = [...transactions, ...importedData];
+                        transactions = Array.from(new Set(combined.map(a => a.id))).map(id => combined.find(a => a.id === id));
+                    } else if (importedData.transactions) {
+                        const combTx = [...transactions, ...importedData.transactions];
+                        transactions = Array.from(new Set(combTx.map(a => a.id))).map(id => combTx.find(a => a.id === id));
+                        
+                        const combOt = [...otData, ...(importedData.overtime || [])];
+                        otData = Array.from(new Set(combOt.map(a => a.id))).map(id => combOt.find(a => a.id === id));
+                        localStorage.setItem(OT_KEY, JSON.stringify(otData));
+                    }
+
+                    saveData(); 
+                    alert('Data berhasil dipulihkan dan disinkronisasi ke Cloud!');
+                } catch (err) { alert('Gagal membaca file JSON!'); }
+                fileImportEl.value = ''; 
+            }; reader.readAsText(file);
+        });
+
+        document.getElementById('btn-reset').addEventListener('click', function() { 
+            if(confirm('Seluruh data akan dihapus permanen dari perangkat dan Cloud. Lanjutkan?')) { 
+                transactions = []; 
+                otData = [];
+                localStorage.removeItem(DATA_KEY); 
+                localStorage.removeItem(OT_KEY);
+                saveData();
+                alert('Aplikasi telah direset.');
+            } 
+        });
+
         // ==========================================
-        // 3. INISIALISASI APLIKASI
+        // 7. INISIALISASI AWAL SAAT WEB DIBUKA
         // ==========================================
         renderApp(); 
         renderOvertime(); 

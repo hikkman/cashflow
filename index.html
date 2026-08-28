@@ -753,8 +753,16 @@
             let totalUpahBulanan = 0; 
             const filterBulan = document.getElementById('ot-filter-month').value; 
 
-            const filteredOT = otData.filter(ot => ot.date.startsWith(filterBulan))
-                                     .sort((a, b) => new Date(b.date) - new Date(a.date));
+            // Filter dengan konversi objek Date (Solusi Zona Waktu)
+            const filteredOT = otData.filter(ot => {
+                if (!ot.date) return false;
+                const d = new Date(ot.date);
+                if (!isNaN(d.getTime())) {
+                    const matchBulan = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+                    return matchBulan === filterBulan;
+                }
+                return ot.date.startsWith(filterBulan); 
+            }).sort((a, b) => new Date(b.date) - new Date(a.date));
 
             filteredOT.forEach(ot => {
                 totalJam += ot.hours;
@@ -808,7 +816,9 @@
             cloudBadge.className = 'badge bg-warning text-dark ms-2 px-2 py-1 shadow-sm';
             
             try {
-                const response = await fetch(SCRIPT_URL, { method: 'GET', redirect: 'follow' });
+                // Gunakan Cache Buster (?t=...) agar Google tidak mengirim data memori (basi)
+                const cacheBusterUrl = SCRIPT_URL + "?t=" + new Date().getTime();
+                const response = await fetch(cacheBusterUrl, { method: 'GET', redirect: 'follow' });
                 const cloudData = await response.json();
                 
                 if(cloudData && cloudData.transactions) {
@@ -937,7 +947,15 @@
 
         document.getElementById('btn-claim-ot').addEventListener('click', function() {
             const filterBulan = document.getElementById('ot-filter-month').value; 
-            const filteredOT = otData.filter(ot => ot.date.startsWith(filterBulan));
+            const filteredOT = otData.filter(ot => {
+                if (!ot.date) return false;
+                const d = new Date(ot.date);
+                if (!isNaN(d.getTime())) {
+                    const matchBulan = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+                    return matchBulan === filterBulan;
+                }
+                return ot.date.startsWith(filterBulan); 
+            });
             
             if (filteredOT.length === 0) { return alert('Belum ada data lembur di bulan ini untuk diklaim.'); }
 

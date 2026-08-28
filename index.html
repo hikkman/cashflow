@@ -484,7 +484,7 @@
         const DATA_KEY = 'keuangan_final_db';
         const TARGET_TABUNGAN = 24000000; 
         const BUDGET_MAKAN = 600000; 
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwu02uZ-LUwCg8EUZNtb9muPSjnSi-rkAVYNK1FJPJ290iACDjE4hGwBwlAMrZQ-94/exec';
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxOyu88A16As2tiWvvS56ew3Q5wihYEXKLIzPcSlGv-RY0OiE7a1ywSV0IcyUmrZBqa/exec';
         
         let transactions = [];
         let chartInstance = null;
@@ -713,7 +713,7 @@
         }
 
         // ==========================================
-        // FUNGSI CLOUD GOOGLE SHEETS
+        // FUNGSI CLOUD GOOGLE SHEETS (DIPERBARUI UNTUK OVERTIME)
         // ==========================================
         async function loadDataFromCloud() {
             const cloudBadge = document.getElementById('cloud-status');
@@ -724,16 +724,29 @@
                 const response = await fetch(SCRIPT_URL, { method: 'GET', redirect: 'follow' });
                 const cloudData = await response.json();
                 
-                if(Array.isArray(cloudData)) {
+                // Jika membaca format baru dari Cloud
+                if(cloudData && cloudData.transactions) {
+                    transactions = cloudData.transactions;
+                    otData = cloudData.overtime || [];
+                    
+                    localStorage.setItem(DATA_KEY, JSON.stringify(transactions));
+                    localStorage.setItem(OT_KEY, JSON.stringify(otData));
+                    
+                    renderApp();
+                    if(typeof renderOvertime === 'function') renderOvertime();
+                    
+                    cloudBadge.innerHTML = '<i class="bi bi-cloud-check"></i> Sinkronisasi Selesai';
+                    cloudBadge.className = 'badge bg-success ms-2 px-2 py-1 shadow-sm';
+                } 
+                // Fallback jika membaca format lama
+                else if (Array.isArray(cloudData)) {
                     transactions = cloudData;
                     localStorage.setItem(DATA_KEY, JSON.stringify(transactions));
                     renderApp();
-                    
                     cloudBadge.innerHTML = '<i class="bi bi-cloud-check"></i> Sinkronisasi Selesai';
                     cloudBadge.className = 'badge bg-success ms-2 px-2 py-1 shadow-sm';
                 }
             } catch (err) {
-                console.error("Gagal menarik data dari Google Sheets:", err);
                 cloudBadge.innerHTML = '<i class="bi bi-cloud-slash"></i> Mode Offline';
                 cloudBadge.className = 'badge bg-secondary ms-2 px-2 py-1 shadow-sm';
             }
@@ -745,16 +758,21 @@
             cloudBadge.className = 'badge bg-primary ms-2 px-2 py-1 shadow-sm';
             
             try {
+                // Bungkus kedua data agar terbaca oleh Google Apps Script
+                const payload = {
+                    transactions: transactions,
+                    overtime: otData
+                };
+
                 await fetch(SCRIPT_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify(transactions)
+                    body: JSON.stringify(payload)
                 });
                 
                 cloudBadge.innerHTML = '<i class="bi bi-cloud-check"></i> Tersimpan di Cloud';
                 cloudBadge.className = 'badge bg-success ms-2 px-2 py-1 shadow-sm';
             } catch (err) {
-                console.error("Gagal menyimpan ke Google Sheets:", err);
                 cloudBadge.innerHTML = '<i class="bi bi-cloud-slash"></i> Tertunda (Offline)';
                 cloudBadge.className = 'badge bg-danger ms-2 px-2 py-1 shadow-sm';
             }
@@ -765,6 +783,49 @@
             renderApp(); 
             syncDataToCloud();
         }
+
+        // --- UPDATE EVENT FORM OVERTIME AGAR IKUT SINKRONISASI ---
+        document.getElementById('ot-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const inputJam = parseFloat(document.getElementById('ot-hours').value);
+            
+            if(!TABEL_UPAH_LEMBUR[inputJam]) {
+                if(!confirm(`Jam lembur (${inputJam} jam) tidak ditemukan di dalam tabel acuan upah. Upah akan tercatat sebagai Rp 0. Tetap lanjutkan?`)) {
+                    return; 
+                }
+            }
+
+            const newOT = {
+                id: Date.now(),
+                date: document.getElementById('ot-date').value,
+                hours: inputJam,
+                desc: document.getElementById('ot-desc').value
+            };
+            otData.push(newOT);
+            
+            // Simpan lokal dan tembak ke cloud
+            localStorage.setItem(OT_KEY, JSON.stringify(otData));
+            renderOvertime();
+            syncDataToCloud(); 
+            
+            document.getElementById('ot-hours').value = '';
+            document.getElementById('ot-desc').value = '';
+        });
+
+        // --- UPDATE EVENT HAPUS OVERTIME AGAR IKUT SINKRONISASI ---
+        document.getElementById('table-overtime').addEventListener('click', function(e) {
+            if (e.target.closest('.del-ot-btn')) {
+                const btn = e.target.closest('.del-ot-btn');
+                if(confirm('Yakin ingin menghapus riwayat overtime ini?')) {
+                    otData = otData.filter(x => x.id !== parseInt(btn.getAttribute('data-id')));
+                    
+                    // Simpan lokal dan tembak ke cloud
+                    localStorage.setItem(OT_KEY, JSON.stringify(otData));
+                    renderOvertime();
+                    syncDataToCloud();
+                }
+            }
+        });
 
         // ==========================================
         // EVENT FORM DASHBOARD & PENGATURAN
